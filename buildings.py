@@ -48,3 +48,40 @@ def BuildingsCenter(building,n_building):
         v0 = [v_center.loc[0, 'POINT_X'], v_center.loc[0, 'POINT_Y'], 0]  # set v1 as the origin(0, 0)
         building_center[x_center]=v_center.loc[:, ['POINT_X', 'POINT_Y', 'HEIGHT']] - 1 * v0
     return [building_center]
+
+def BuildingsNeigh(building, n_building, r):
+    import math
+    # Step 1.2: dataprocessing
+    # define the neighbour buildings to building i
+    #calculate the distance between each building by the radius of the neighbourhood
+
+    building_neigh = {}  # corresponding neighbour building vertex set from the origin
+    building_neighnum = {}  # corresponding building number
+
+    for x_center in range(0, n_building):
+
+        n_vertex = len(building[x_center])
+        # set the origin of the coordinate
+        v_center = building[x_center].loc[0:n_vertex - 1, :]
+        v0 = [v_center.loc[0, 'POINT_X'], v_center.loc[0, 'POINT_Y'], 0]  # set v1 as the origin(0, 0)
+        count = 0  # counting the number of buildings in each neighbourhood for building i
+        v_center = building[x_center].loc[0:n_vertex - 1,
+                   :]  # footprint vertex of a single building matrix exclude last vertex
+
+        for x_neigh in range(0, n_building):
+            distance = math.sqrt((building[x_neigh].loc[0, 'POINT_X'] - building[x_center].loc[0, 'POINT_X']) ** 2 + (
+                        building[x_neigh].loc[0, 'POINT_Y'] - building[x_center].loc[
+                    0, 'POINT_Y']) ** 2)  # distance of the first vertex of each building
+
+            if distance <= r:
+                count = count + 1;  # x_neigh recognized as a neighbourbuilding
+
+                # Use the vertex1(building{x_center}) as origin of the other neighbouring buildings
+                n_vertex = len(building[x_neigh])
+                v_neigh = building[x_neigh].loc[0:n_vertex - 1,
+                          ['POINT_X', 'POINT_Y', 'HEIGHT']] - 1 * v0  # exclude the last vertex which is the same as v1
+
+                building_neigh[x_center, count] = v_neigh
+                building_neighnum[
+                    x_center, count] = x_neigh  # corresponding neighbour building number(id), consistentwith ORIG_FID
+    return [building_neigh, building_neighnum]

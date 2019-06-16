@@ -6,6 +6,7 @@ from  UserSettings import SetRunFolder
 from RetrofitType import SetRetrofitFiles
 from buildings import ProcessCoordinates
 from buildings import BuildingsCenter
+from buildings import BuildingsNeigh
 
 core_selection=1 # One simulation or two in parallel? either 1 or 2
 variable_schedules=''# Either 'Variable' or 'Fixed'
@@ -95,6 +96,7 @@ if r>0: #If the shading radius is larger than zero, do you want neighbour buildi
 else:
     #set neighbour buildings to empty cells
     building_neigh={} # corresponding neighbour building vertex set from the origin
+    building_neighnum={} # corresponding building number
     building_neighnum={} # corresponding building number
 
 # Step 2.4 - Check for Adjacence
