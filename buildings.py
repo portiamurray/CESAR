@@ -26,26 +26,14 @@ def ProcessCoordinates(points,orig_id):
             if org_fid[i] == orig_id[j]:
                 resid_id[j] = bldng_nr[i]
     # Step 2 - Assign points belonging to the same building points: columns including the information of 1(original% fid), 2(x), 3(y), 4(height)
+    building = {}
 
-    #building = cell(n_building, 6):
-
-    for x_building in range(0,n_building - 1)
-
-        bd = points.loc[b_index[x_building]:b_index[x_building + 1] - 1,:]
-        a = [bd.loc[:, 'POINT_X'] bd(:, 3) bd(:, 4)] # x - coordinate, y - coordinate, height
-        b = bd(1, 1) # org_fid, consistant with ArcGIS building shapes
-        {x_building, 1} = a
-        {x_building, 2} = b
-
-
-    for x_building=n_building:
-        bd = points(b_index(x_building):n,:)
-        a = [bd(:, 2) bd(:, 3) bd(:, 4)] # x - coordinate, y - coordinate, height
-        b = bd(1, 1) # org_fid, consistant with ArcGIS building shapesbuilding
-        {x_building, 1} = a
-
-        {x_building, 2} = b
-    return [building,n_building,resid_id]
+    for x_building in range(0, n_building):
+        if x_building < n_building - 1:
+            building[x_building] = points.loc[b_index[x_building]:b_index[x_building + 1] - 1, :]
+        else:
+            building[x_building] = points.loc[b_index[x_building]:n, :]
+    return [building, n_building,resid_id]
 
 def BuildingsCenter(building,n_building):
 

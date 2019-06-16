@@ -72,32 +72,32 @@ if bldspecglzrate_selection==1: #if building specific glazing rate is selected
 gmde_weather=sim_buildings.loc[:,'GDE-Number'] # Gemeinde number in order to assign weather file based on location
 copyfile(arcgis_simbuildings,arcgispath+'BuildingInformation.csv')
 
-# Step 2 - Create Buildings & Neigbourhoode
+# Step 2 - Create Buildings & Neigbourhood
 
 # Assign the vertexes to the buildings and neighbourhood and create the
 # buildings database and neighbourhood database
 
 # Step 2.1 - Create the buildings database
 print('--------->   Step 2.1: Create the buildings database   <---------')
-[ building, n_building,resid_id] = ProcessCoordinates( points,orig_fid)
+[building,n_building,resid_id] = ProcessCoordinates(points,orig_fid)
 
 # Step 2.2 - Create Center Buildings
-print('--------->   Step 2.2: Create Center Buildings   <---------')
+#print('--------->   Step 2.2: Create Center Buildings   <---------')
 # set selfcentered coordinates for each center building (simulated
 # building)
-[ building_center ] = BuildingsCenter( building,n_building )
+#[ building_center ] = BuildingsCenter( building,n_building )
 
 # Step 2.3 - Create Neighbourhood of Center buildings
-print('--------->   Step 2.3: Create Neighbourhood of Center buildings   <---------')
-if r>0:
+#print('--------->   Step 2.3: Create Neighbourhood of Center buildings   <---------')
+#if r>0:
     #run('buildings_neigh.m');
-    [building_neigh, building_neighnum ] = BuildingsNeigh(building,n_building,r );
-else:
+    #[building_neigh, building_neighnum ] = BuildingsNeigh(building,n_building,r );
+#else:
     #set neighbour buildings to empty cells
-    building_neigh=cell(n_building) # corresponding neighbour building vertex set from the origin
-    building_neighnum=cell(n_building) # corresponding building number
-end
+    #building_neigh=cell(n_building) # corresponding neighbour building vertex set from the origin
+    #building_neighnum=cell(n_building) # corresponding building number
+
 # Step 2.4 - Check for Adjacence
-print('--------->   Step 2.4: Check for Adjacence   <---------')
-[adjacence_inf] = BuildingsAdjacence( building,n_building)
+#print('--------->   Step 2.4: Check for Adjacence   <---------')
+#[adjacence_inf] = BuildingsAdjacence( building,n_building)
 
