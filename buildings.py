@@ -30,11 +30,21 @@ def ProcessCoordinates(points,orig_id):
 
     for x_building in range(0, n_building):
         if x_building < n_building - 1:
-            building[x_building] = points.loc[b_index[x_building]:b_index[x_building + 1] - 1, :]
+            building[x_building] = points.loc[b_index[x_building]:b_index[x_building + 1] - 1, :].reset_index()
         else:
-            building[x_building] = points.loc[b_index[x_building]:n, :]
+            building[x_building] = points.loc[b_index[x_building]:n, :].reset_index()
     return [building, n_building,resid_id]
 
 def BuildingsCenter(building,n_building):
+    # Step 1.2: dataprocessing (note that: for anybuilding x_building, for each simulation job for x_building(center building), set the origin as v1(x_building) always, the
+    # neighbour buildings working as other shading buildings are with the same origin.
 
+    building_center = {} #cell(n_building, 1);
+
+    for x_center in range(0,n_building):
+        n_vertex = len(building[x_center])
+        v_center = building[x_center].loc[0:n_vertex - 1,:] # footprint vertex of a single building matrix exclude last vertex
+        # set the origin of the coordinate
+        v0 = [v_center.loc[0, 'POINT_X'], v_center.loc[0, 'POINT_Y'], 0]  # set v1 as the origin(0, 0)
+        building_center[x_center]=v_center.loc[:, ['POINT_X', 'POINT_Y', 'HEIGHT']] - 1 * v0
     return [building_center]

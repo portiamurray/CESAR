@@ -5,6 +5,7 @@ from shutil import copyfile
 from  UserSettings import SetRunFolder
 from RetrofitType import SetRetrofitFiles
 from buildings import ProcessCoordinates
+from buildings import BuildingsCenter
 
 core_selection=1 # One simulation or two in parallel? either 1 or 2
 variable_schedules=''# Either 'Variable' or 'Fixed'
@@ -14,7 +15,7 @@ arcgis_sitefile='/Users/portia_murray/Desktop/03_CESAR_Tool_the_15022018_PM/05_T
 RetrofitClass='Tar' # Either target U-values or minimum U-values for retrofits
 cixed_classes='F' # Either 'Variable' or 'Fixed' constructions
 glratethreshold=100 # Maximum glazing ratio
-r=50 # Shading distance from other buildings
+r=50 # Shading distance from other buildings, default value should be 50
 bldtype=['EFH','MFH','Office','Restaurant','Hospital','School','Shop'] # building type
 externalinput_path=project_directory+'00_ExternalInput/' #Path to external imput
 bldspecglzrate_selection=0 # 0 if building specific glazing ratio is unknown, 1 if known (assigned in building information file by user)
@@ -39,7 +40,7 @@ output_parameters=1 #PROBABLY REDUNDANT, REMOVE LATER
 glazingratiopath=externalinput_path +'/00_GeneralData/'
 # define the path to the standard infiltration rate
 infratepath=externalinput_path + '/00_GeneralData/'
-print('--------->   Step 0.1   <---------')
+print('--------->   Step 0: Import building coordinate and information files    <---------')
 # call input points as building footprint vertices(raw data from ArcGIS)
 # for all the buildings at the analysis site (incl. shading objects!)
 # with the following information:
@@ -50,7 +51,7 @@ points = pd.read_csv(arcgis_sitefile) # read the CSV, starting from row 1 and co
 copyfile(arcgis_sitefile,arcgispath+'SiteVertices.csv') # copy the file to the Project Folder to keep it for later simulations
 
 # Step 1.1 - Select Simulation Buildings
-print('--------->   Step 1.1   <---------\n')
+print('--------->   Step 1.1: Select Simulation Buildings   <---------')
 
 # call the file containing information about the buildings to be simulated
 # Information (in this order):
@@ -82,20 +83,19 @@ print('--------->   Step 2.1: Create the buildings database   <---------')
 [building,n_building,resid_id] = ProcessCoordinates(points,orig_fid)
 
 # Step 2.2 - Create Center Buildings
-#print('--------->   Step 2.2: Create Center Buildings   <---------')
-# set selfcentered coordinates for each center building (simulated
-# building)
-#[ building_center ] = BuildingsCenter( building,n_building )
+print('--------->   Step 2.2: Create Center Buildings   <---------')
+# set selfcentered coordinates for each center building (simulated building)
+[ building_center ] = BuildingsCenter( building,n_building )
 
 # Step 2.3 - Create Neighbourhood of Center buildings
-#print('--------->   Step 2.3: Create Neighbourhood of Center buildings   <---------')
-#if r>0:
-    #run('buildings_neigh.m');
-    #[building_neigh, building_neighnum ] = BuildingsNeigh(building,n_building,r );
-#else:
+print('--------->   Step 2.3: Create Neighbourhood of Center buildings   <---------')
+if r>0: #If the shading radius is larger than zero, do you want neighbour buildings to be considered as shading objects
+    # run 'buildings_neigh' function
+    [building_neigh, building_neighnum] = BuildingsNeigh(building,n_building,r)
+else:
     #set neighbour buildings to empty cells
-    #building_neigh=cell(n_building) # corresponding neighbour building vertex set from the origin
-    #building_neighnum=cell(n_building) # corresponding building number
+    building_neigh={} # corresponding neighbour building vertex set from the origin
+    building_neighnum={} # corresponding building number
 
 # Step 2.4 - Check for Adjacence
 #print('--------->   Step 2.4: Check for Adjacence   <---------')
