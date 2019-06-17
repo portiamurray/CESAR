@@ -7,6 +7,7 @@ from RetrofitType import SetRetrofitFiles
 from buildings import ProcessCoordinates
 from buildings import BuildingsCenter
 from buildings import BuildingsNeigh
+from buildings import BuildingsAdjacence
 
 core_selection=1 # One simulation or two in parallel? either 1 or 2
 variable_schedules=''# Either 'Variable' or 'Fixed'
@@ -51,8 +52,8 @@ print('--------->   Step 0: Import building coordinate and information files    
 points = pd.read_csv(arcgis_sitefile) # read the CSV, starting from row 1 and column 0 (dont read the header of the csv)
 copyfile(arcgis_sitefile,arcgispath+'SiteVertices.csv') # copy the file to the Project Folder to keep it for later simulations
 
-# Step 1.1 - Select Simulation Buildings
-print('--------->   Step 1.1: Select Simulation Buildings   <---------')
+# Step 1 - Select Simulation Buildings
+print('--------->   Step 1: Select Simulation Buildings   <---------')
 
 # call the file containing information about the buildings to be simulated
 # Information (in this order):
@@ -100,6 +101,6 @@ else:
     building_neighnum={} # corresponding building number
 
 # Step 2.4 - Check for Adjacence
-#print('--------->   Step 2.4: Check for Adjacence   <---------')
-#[adjacence_inf] = BuildingsAdjacence( building,n_building)
+print('--------->   Step 2.4: Check for Adjacence   <---------')
+adjacence_inf = BuildingsAdjacence( building,n_building)
 

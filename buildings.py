@@ -69,19 +69,78 @@ def BuildingsNeigh(building, n_building, r):
                    :]  # footprint vertex of a single building matrix exclude last vertex
 
         for x_neigh in range(0, n_building):
-            distance = math.sqrt((building[x_neigh].loc[0, 'POINT_X'] - building[x_center].loc[0, 'POINT_X']) ** 2 + (
-                        building[x_neigh].loc[0, 'POINT_Y'] - building[x_center].loc[
-                    0, 'POINT_Y']) ** 2)  # distance of the first vertex of each building
+            if x_neigh!=x_center:
+                distance = math.sqrt((building[x_neigh].loc[0, 'POINT_X'] - building[x_center].loc[0, 'POINT_X']) ** 2 + (
+                            building[x_neigh].loc[0, 'POINT_Y'] - building[x_center].loc[
+                        0, 'POINT_Y']) ** 2)  # distance of the first vertex of each building
 
-            if distance <= r:
-                count = count + 1;  # x_neigh recognized as a neighbourbuilding
+                if distance <= r:
+                    count = count + 1;  # x_neigh recognized as a neighbourbuilding
 
-                # Use the vertex1(building{x_center}) as origin of the other neighbouring buildings
-                n_vertex = len(building[x_neigh])
-                v_neigh = building[x_neigh].loc[0:n_vertex - 1,
-                          ['POINT_X', 'POINT_Y', 'HEIGHT']] - 1 * v0  # exclude the last vertex which is the same as v1
+                    # Use the vertex1(building{x_center}) as origin of the other neighbouring buildings
+                    n_vertex = len(building[x_neigh])
+                    v_neigh = building[x_neigh].loc[0:n_vertex - 1,
+                              ['POINT_X', 'POINT_Y', 'HEIGHT']] - 1 * v0  # exclude the last vertex which is the same as v1
 
-                building_neigh[x_center, count] = v_neigh
-                building_neighnum[
-                    x_center, count] = x_neigh  # corresponding neighbour building number(id), consistentwith ORIG_FID
+                    building_neigh[x_center, count] = v_neigh
+                    building_neighnum[
+                        x_center, count] = x_neigh  # corresponding neighbour building number(id), consistentwith ORIG_FID
     return [building_neigh, building_neighnum]
+
+def BuildingsAdjacence(building,n_building):
+    import pandas as pd
+    import math
+
+    # step1.2: dataprocessing 2
+    # define the neighbour buildings to building i
+
+    #caculate the distance between each building by the radius of the neighbourhood
+
+    # corresponding neighbour building vertex set from the origin
+    # corresponding building number
+    # max number of vertices
+    n_vertall=[None]*n_building
+    for i_building in range(0,n_building):
+        n_vertall[i_building]=len(building[i_building])-1
+
+    adjacence_inf=pd.DataFrame(index=range(0,n_building),columns=range(0,max(n_vertall))) # information about adjacent buildings
+
+    for x_center in range(0,n_building): # for each center building
+        n_vertex=len(building[x_center]) # number of vertexes of the center building
+        #    v_center=building{x_center}(1:n_vertex-1,:); %footprint vertex of a single building matrix exclude last vertex
+        #     set the origin of the coordinate
+        #     v0=[v_center(1,1:2) 0]; %set v1 as the origin (0,0)
+        #     count=0; %counting the number of buildings in each neighbourhood for building i
+        for x_centervert in range(0,n_vertex-1): # for each vertex of the center building, exclude the last one
+            if x_centervert<n_vertex-1: # if it is not the last vertex
+                for x_neigh in range(0,n_building):
+                    if x_center !=x_neigh:
+                        distance = math.sqrt((building[x_neigh].loc[0, 'POINT_X'] - building[x_center].loc[0, 'POINT_X']) ** 2 + (
+                                    building[x_neigh].loc[0, 'POINT_Y'] - building[x_center].loc[0, 'POINT_Y']) ** 2)  # distance of the first vertex of each building
+                        if distance < 100: # if the distance between the buildings is smaller than 100 meters
+                            n_vertex_neigh=len(building[x_neigh]) # number of vertexes of the neighbouring building
+                            for x_neighvert in range(0,n_vertex_neigh-1): # for each neighbouring vertex
+                                distance_vert = math.sqrt((building[x_neigh].loc[x_neighvert, 'POINT_X'] - building[x_center].loc[x_centervert, 'POINT_X']) ** 2 + (
+                                            building[x_neigh].loc[x_neighvert, 'POINT_Y'] - building[x_center].loc[x_centervert, 'POINT_Y']) ** 2)
+                                if distance_vert<0.01: # if the distance is smaller than 1 cm
+                                    x_nextcentervert=x_centervert+1 # the next vertice of the center building
+                                    for x_nextneighvert in range(0,n_vertex_neigh-1): # for each neighbouring vertex, exclude the last one
+                                        distance_nextcentervert=math.sqrt((building[x_neigh].loc[x_nextneighvert, 'POINT_X'] - building[x_center].loc[x_nextcentervert, 'POINT_X']) ** 2 + (building[x_neigh].loc[x_nextneighvert, 'POINT_Y'] - building[x_center].loc[x_nextcentervert, 'POINT_Y']) ** 2)
+                                        if distance_nextcentervert<0.01: # if the distance of the next centervert to another vertex of the same neighbouring building is again small
+                                            adjacence_inf.loc[x_center,x_centervert]=1 # information about adjacence of buildings
+            else:
+                for x_neigh in range(0,n_building):
+                    if x_neigh!=x_center:
+                        distance = math.sqrt((building[x_neigh].loc[0, 'POINT_X'] - building[x_center].loc[0, 'POINT_X']) ** 2 + (building[x_neigh].loc[0, 'POINT_Y'] - building[x_center].loc[0, 'POINT_Y']) ** 2)  # distance of the first vertex of each building
+                        if distance < 100: # if the distance between the buildings is smaller than 100 meters
+                            n_vertex_neigh=len(building[x_neigh]) # number of vertexes of the neighbouring building
+                            for x_neighvert in range(0,n_vertex_neigh-1): # for each neighbouring vertex
+                                distance_vert = math.sqrt((building[x_neigh].loc[x_neighvert, 'POINT_X'] - building[x_center].loc[x_centervert, 'POINT_X']) ** 2 + (building[x_neigh].loc[x_neighvert, 'POINT_Y'] - building[x_center].loc[x_centervert, 'POINT_Y']) ** 2) # distance between the two vertices
+                                if distance_vert<0.01: # if the distance is smaller than 1 cm ??
+                                    x_nextcentervert=1 # the next vertice is the first one of the building
+                                    for x_nextneighvert in range(0,n_vertex_neigh-1): # for each neighbouring vertex, exclude the last one
+                                        distance_nextcentervert = math.sqrt((building[x_neigh].loc[x_nextneighvert, 'POINT_X'] - building[x_center].loc[x_nextcentervert, 'POINT_X']) ** 2 + (building[x_neigh].loc[x_nextneighvert, 'POINT_Y'] -building[x_center].loc[x_nextcentervert, 'POINT_Y']) ** 2)
+                                        if distance_nextcentervert<0.01: # if the distance of the next centervert to another vertex of the same neighbouring building is again small
+                                            adjacence_inf.loc[x_center,x_centervert]=1 # information about adjacence of buildings
+    return adjacence_inf
+
