@@ -60,6 +60,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # ----------
     room = {}
     name, area, occ_breaks, appliance_breaks, setback, set_back_temp, night, night_DHW, night_light, mech_vent, pressurisation, row, infiltration_rate_nominal, ruhetage, monthly_variation_nominal, daily_occupancy_nominal, monthly_variation_variable, yearly_variation_nominal, daily_variation_variable, daily_variation_nominal, yearly_variation_variable, yearly_occupancy_variable, yearly_occupancy_nominal = "name", "area", "occ_breaks", "appliance_breaks", "setback", "set_back_temp", "night", "night_DHW", "night_light", "mech_vent", "pressurisation", "row", "infiltration_rate_nominal", "ruhetage", "monthly_variation_nominal", "daily_occupancy_nominal", "monthly_variation_variable", "yearly_variation_nominal", "daily_variation_variable", "daily_variation_nominal", "yearly_variation,variable", "yearly_occupancy_variable", "yearly_occupancy_nominal"
+    area_per_person_nominal, area_per_person_min, area_per_person_max,area_per_person_variable, therm_h_nominal, therm_c_nominal,activity_nominal,activity_variable = "area_per_person_nominal", "area_per_person_min", "area_per_person_max", "area_per_person_variable","therm_h_nominal", "therm_c_nominal","activity_nominal","activity_variable"
     room[name] = {}
     room[area] = {}
     room[occ_breaks] = {}
@@ -83,11 +84,19 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     room[yearly_occupancy_variable] = {}
     room[yearly_occupancy_nominal] = {}
     room[ruhetage] = {}
+    room[area_per_person_nominal] = {}
+    room[area_per_person_min] = {}
+    room[area_per_person_max] = {}
+    room[area_per_person_variable] = {}
+    room[therm_h_nominal] = {}
+    room[therm_c_nominal] = {}
+    room[activity_nominal]={}
+    room[activity_variable]={}
     if bldg == 'mfh':
         room_num = 2
         # MFH composition according to SIA 2024 v.2016
         room[name][0] = 'MFH'
-        room[1] = 'Staircase'
+        room[name][1] = 'Staircase'
     elif bldg == 'efh':
         # EFH composition according to SIA2024 v.2016
         room_num = 1
@@ -450,38 +459,38 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # Number of people per unit area (nominal, minimum, maximum)
         # ----------------------------------------------------------
-        room[](rm).area_per_person_nominal = db2024(room(rm).row, 3) # m2 / Person
-        room(rm).area_per_person_min = db2024(room(rm).row, 106) # m2 / Person
-        room(rm).area_per_person_max = db2024(room(rm).row, 105) # m2 / Person
+        room[area_per_person_nominal][rm] = db2024.loc[room[row][rm], 3] # m2 / Person
+        room[area_per_person_min][rm] = db2024.loc[room[row][rm], 106] # m2 / Person
+        room[area_per_person_max][rm] = db2024.loc[room[row][rm], 105] # m2 / Person
 
         # Create triangular distribution
         # ------------------------------
-        x0 =[room(rm).area_per_person_min - 1, room(rm).area_per_person_max + 1]
-        [x, ~, exitflag] = fsolve( @ (x)my_triang(x, room(rm).area_per_person_min, room(rm).area_per_person_max, room(rm).area_per_person_nominal), x0) # Call solver
+        x0 =[room[area_per_person_min][rm] - 1, room[area_per_person_max][rm] + 1]
+        [x, ~, exitflag] = fsolve( @ (x)my_triang(x, room[area_per_person_min][rm], room[area_per_person_max][rm], room[area_per_person_nominal][rm]), x0) # Call solver
 
         # Sample from triangular distribution
         # -----------------------------------
-        pd = makedist('Triangular', 'a', x(1), 'b', room(rm).area_per_person_nominal, 'c', x(2))
-        if room(rm).area_per_person_nominal == 0:
-            room(rm).area_per_person_variable = zeros(value_number, 1)
+        pdd = makedist('Triangular', 'a', x[1], 'b', room[area_per_person_nominal][rm], 'c', x[2])
+        if room[area_per_person_nominal][rm] == 0:
+            room[area_per_person_variable ][rm] = np.zeros(value_number, 1)
         else:
-            room(rm).area_per_person_variable = random(pd, value_number, 1)
-            room(rm).area_per_person_variable = round(room(rm).area_per_person_variable, 1) # round to 1 decimal digit
+            room[area_per_person_variable][rm] = np.random(pdd, value_number, 1)
+            room[area_per_person_variable][rm] = round(room(rm).area_per_person_variable, 1) # round to 1 decimal digit
 
         # Occupant activities
         # -----------------------------
         # Calculations are directly made in W / P terms
         # -----------------------------
-        room(rm).activity_nominal = db2024(room(rm).row, 5) * room(rm).area_per_person_nominal # W / P
+        room[activity_nominal][rm] = db2024.loc[room[row][rm], 5] * room[area_per_person_nominal][rm] # W / P
         # If we want uncertain activity, then uncomment the following:
-        room(rm).activity_variable = normrnd(activity_nominal, activity_nominal / 20, [value_number 1])
+        room[activity_variable][rm] = normrnd(activity_nominal, activity_nominal / 20, [value_number 1])
         # If activity uncertainty is not considered, then:
         room(rm).activity_variable = repmat(room(rm).activity_nominal, value_number, 1)
 
         # Create activity profile \
         # ----------------------- \
-        room[rm].yearly_activity_nominal = repmat(room(rm).activity_nominal, 8760, 1)
-        room[rm].yearly_activity_variable = repmat(room(rm).activity_variable', 8760, 1)
+        room[rm].yearly_activity_nominal = repmat(room[activity_nominal][rm], 8760, 1)
+        room[rm].yearly_activity_variable = repmat(room[activity_variable][rm], 8760, 1)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -489,29 +498,28 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # == == == == == == == == == == == == == == =
 
     # Initialization \
-      # -------------- \
+    # -------------- \
     area_per_person_nominal = 0
     yearly_occupancy_nominal = 0
     yearly_activity_nominal = 0
 
-    area_per_person_variable = zeros(value_number, 1)
+    area_per_person_variable = np.zeros((value_number, 1))
 
     # Calculation
       # -----------
-    for rm = range(0,room_num):
+    for rm in range(0,room_num):
         # Nominal values
         # --------------
-        if room(rm).area_per_person_nominal == 0:
+        if room[area_per_person_nominal][rm] == 0:
             area_per_person_nominal = area_per_person_nominal
         else:
-            area_per_person_nominal = area_per_person_nominal + (room(rm).area * 1 / room(rm).area_per_person_nominal) / sum(cat(1, room.area))
+            area_per_person_nominal = area_per_person_nominal + (room[area][rm] * 1 / room[area_per_person_nominal][rm]) / sum(cat(1, room[area][rm]))
     # Variable values
     # ---------------
-    if room(rm).area_per_person_nominal == 0:
+    if room[area_per_person_nominal][rm] == 0:
         area_per_person_variable = area_per_person_variable
     else:
-        area_per_person_variable = area_per_person_variable + (
-                room(rm).area * 1. / room(rm).area_per_person_variable) / sum(cat(1, room.area))
+        area_per_person_variable = area_per_person_variable + (room[area][rm] * 1 / room[area_per_person_variable][rm]) / sum(cat(1, room[area][rm]))
 
     if area_per_person_nominal ~ = 0:
         area_per_person_nominal = 1 / area_per_person_nominal
@@ -604,7 +612,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # Sample from triangular distribution
     # -----------------------------------
      pd = makedist('Triangular', 'a', x(1), 'b', room(rm).therm_h_nominal, 'c', x(2));
-    # room(rm).therm_h_variable = random(pd, value_number, 1)
+    # room(rm).therm_h_variable = random(pdd, value_number, 1)
     #
     # Create triangular distribution
     # ------------------------------
@@ -623,8 +631,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # if isempty(non_compliant_points) == 0
         # for nc = 1:1:max(size(non_compliant_points))
     # while room(rm).therm_h_variable(non_compliant_points(nc)) > room(rm).therm_c_variable(non_compliant_points(nc))
-        # room(rm).therm_h_variable(non_compliant_points(nc)) = random(pd, 1);
-    # room(rm).therm_c_variable(non_compliant_points(nc)) = random(pd1, 1);
+        # room(rm).therm_h_variable(non_compliant_points(nc)) = random(pdd, 1);
+    # room(rm).therm_c_variable(non_compliant_points(nc)) = random(pd1d, 1);
 
     room(rm).therm_h_variable = round(room(rm).therm_h_variable, 1)# round to 1 decimal digit
     room(rm).therm_c_variable = round(room(rm).therm_c_variable, 1); # round to 1 decimal digit
@@ -983,8 +991,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     if x(1) == x(2) & & x(2) == room(rm).dhw_nominal
     room(rm).dhw_variable = zeros(value_number, 1)
     else
-    pd = makedist('Triangular', 'a', x(1), 'b', room(rm).dhw_nominal, 'c', x(2))
-    room(rm).dhw_variable = random(pd, value_number, 1)
+    pdd = makedist('Triangular', 'a', x(1), 'b', room(rm).dhw_nominal, 'c', x(2))
+    room(rm).dhw_variable = random(pdd, value_number, 1)
     room(rm).dhw_variable = round(room(rm).dhw_variable, 1)# round to 1 decimal digit
     en
     end
@@ -1135,8 +1143,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Sample from triangular distribution
     # -----------------------------------
-    pd = makedist('Triangular', 'a', x(1), 'b', room(rm).light_density_nominal, 'c', x(2));
-    room(rm).light_density_variable = random(pd, value_number, 1);
+    pdd = makedist('Triangular', 'a', x(1), 'b', room(rm).light_density_nominal, 'c', x(2));
+    room(rm).light_density_variable = random(pdd, value_number, 1);
     room(rm).light_density_variable = round(room(rm).light_density_variable, 1); # round to 1 decimal digit
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1271,8 +1279,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Sample from triangular distribution
     # -----------------------------------
-    pd = makedist('Triangular', 'a', x(1), 'b', room(rm).appliances_level_nominal, 'c', x(2));
-    room(rm).appliances_level_variable = random(pd, value_number, 1);
+    pdd = makedist('Triangular', 'a', x(1), 'b', room(rm).appliances_level_nominal, 'c', x(2));
+    room(rm).appliances_level_variable = random(pdd, value_number, 1);
     room(rm).appliances_level_variable = round(room(rm).appliances_level_variable, 1) # round to 1 decimal digit
 
     end
