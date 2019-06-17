@@ -1,3 +1,36 @@
+def rle_cumsum_diff(vals,runlens):
+    import numpy as np
+    clens = np.cumsum(runlens)
+    idx = np.zeros(8760)
+    difference = np.diff(vals)
+    inter = clens[0:len(clens) - 1]
+    for i in range(0, 364):
+        idx[int(inter[i])] = difference[i]
+    out = np.cumsum(idx)
+    return [out]
+
+def horizonal_variability(profile, breaks):
+    # Function that implements the "horizontal variability" aspect in the
+    # variable SIA 2024 profiles
+    perturb = breaks
+
+    if len(breaks) == 0:
+        perturbed_profile = profile
+    else:
+        for i in range(1,365):
+            perturb = [perturb, breaks + 24 * (i - 1)]
+
+    [~, prof_size] = len(profile)
+
+    for i in range(0,prof_size):
+        if rand() <= 0.6 # Probability that a profile will be perturbed or not; set to 1 to perturb all profiles
+            perturbation_values = randpermbreak(8760, perturb)
+            perturbed_profile(:, i) = profile(perturbation_values, i)
+        else:
+            perturbed_profile(:, i) = profile(:, i)
+    return perturbed_profile
+
+
 def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, variable_schedules, schedulepath, bldg, project_directory):
     import numpy as np
     import pandas as pd
@@ -10,9 +43,6 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # ----------------------------------------------------------------
     uncertainty = 1
 
-    path_nominal = schedulepath
-    path_variable = schedulepath
-
     # Background | Introduction
     # == == == == == == == == == == == ==
 
@@ -21,8 +51,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # Building type
     # -------------
 
-
-    #bldg = 'mfh'  # This is only a name (FIX LATER, NON-INTUITIVE)
+    # bldg = 'mfh'  # This is only a name (FIX LATER, NON-INTUITIVE)
 
     # Number of rooms
     # ---------------
@@ -30,22 +59,30 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # Room types
     # ----------
     room = {}
-    name, area, occ_breaks, appliance_breaks, setback, set_back_temp, night, night_DHW, night_light, mech_vent, pressurisation, row, infiltration_rate_nominal,ruhetage,monthly_variation_nominal,daily_occupancy_nominal,monthly_variation_variable,yearly_variation_nominal,daily_variation_variable = "name", "area", "occ_breaks", "appliance_breaks", "setback", "set_back_temp", "night", "night_DHW", "night_light", "mech_vent", "pressurisation", "row", "infiltration_rate_nominal", "ruhetage","monthly_variation_nominal","daily_occupancy_nominal","monthly_variation_variable","yearly_variation_nominal","daily_variation_variable"
+    name, area, occ_breaks, appliance_breaks, setback, set_back_temp, night, night_DHW, night_light, mech_vent, pressurisation, row, infiltration_rate_nominal, ruhetage, monthly_variation_nominal, daily_occupancy_nominal, monthly_variation_variable, yearly_variation_nominal, daily_variation_variable, daily_variation_nominal, yearly_variation_variable, yearly_occupancy_variable, yearly_occupancy_nominal = "name", "area", "occ_breaks", "appliance_breaks", "setback", "set_back_temp", "night", "night_DHW", "night_light", "mech_vent", "pressurisation", "row", "infiltration_rate_nominal", "ruhetage", "monthly_variation_nominal", "daily_occupancy_nominal", "monthly_variation_variable", "yearly_variation_nominal", "daily_variation_variable", "daily_variation_nominal", "yearly_variation,variable", "yearly_occupancy_variable", "yearly_occupancy_nominal"
     room[name] = {}
     room[area] = {}
     room[occ_breaks] = {}
     room[setback] = {}
+    room[set_back_temp] = {}
     room[appliance_breaks] = {}
-    room[mech_vent]={}
-    room[pressurisation]={}
-    room[row]={}
-    room[infiltration_rate_nominal]={}
-    room[monthly_variation_nominal]={}
-    room[daily_occupancy_nominal]={}
-    room[monthly_variation_variable]={}
-    room[yearly_variation_nominal]={}
-    room[daily_variation_variable]={}
-
+    room[mech_vent] = {}
+    room[night] = {}
+    room[night_DHW] = {}
+    room[night_light] = {}
+    room[pressurisation] = {}
+    room[row] = {}
+    room[infiltration_rate_nominal] = {}
+    room[monthly_variation_nominal] = {}
+    room[daily_occupancy_nominal] = {}
+    room[monthly_variation_variable] = {}
+    room[yearly_variation_nominal] = {}
+    room[daily_variation_variable] = {}
+    room[daily_variation_nominal] = {}
+    room[yearly_variation_variable] = {}
+    room[yearly_occupancy_variable] = {}
+    room[yearly_occupancy_nominal] = {}
+    room[ruhetage] = {}
     if bldg == 'mfh':
         room_num = 2
         # MFH composition according to SIA 2024 v.2016
@@ -114,12 +151,12 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
         room[name][8] = 'WC'
     # Breakdown of total area( in % or m2)
     # ------------------------------------
-    if bldg=='mfh':
+    if bldg == 'mfh':
         room[area][0] = 90
         room[area][1] = 10
-    elif bldg=='efh':
+    elif bldg == 'efh':
         room[area][0] = 100
-    elif bldg=='office':
+    elif bldg == 'office':
         room[area][0] = 10
         room[area][1] = 50
         room[area][2] = 10
@@ -130,7 +167,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
         room[area][7] = 2
         room[area][8] = 2
         room[area][9] = 1
-    elif bldg=='school':
+    elif bldg == 'school':
         room[area][0] = 50
         room[area][1] = 5
         room[area][2] = 5
@@ -140,23 +177,23 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
         room[area][6] = 5
         room[area][7] = 5
         room[area][8] = 5
-    elif bldg=='shop':
+    elif bldg == 'shop':
         room[area][0] = 5
-        room[area][1]= 20
+        room[area][1] = 20
         room[area][2] = 20
         room[area][3] = 20
         room[area][4] = 10
         room[area][5] = 5
         room[area][6] = 15
         room[area][7] = 5
-    elif bldg=='restaurant':
+    elif bldg == 'restaurant':
         room[area][0] = 5
         room[area][1] = 60
         room[area][2] = 10
         room[area][3] = 10
         room[area][4] = 10
         room[area][5] = 5
-    elif bldg=='hospital':
+    elif bldg == 'hospital':
         room[area][0] = 5
         room[area][1] = 50
         room[area][2] = 5
@@ -180,8 +217,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Horizontal variability breaks
     # -----------------------------
-    room[occ_breaks][0] = [6,8,12,15,17,21,24]
-    room[occ_breaks][1] = [6,19,24]
+    room[occ_breaks][0] = [6, 8, 12, 15, 17, 21, 24]
+    room[occ_breaks][1] = [6, 19, 24]
     room[occ_breaks][2] = []
     room[occ_breaks][3] = []
     room[occ_breaks][4] = []
@@ -191,8 +228,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     room[occ_breaks][8] = []
     room[occ_breaks][9] = []
 
-    room[appliance_breaks][0] = [6,8,12,15,17,21,24]
-    room[appliance_breaks][1] = [6,19,24]
+    room[appliance_breaks][0] = [6, 8, 12, 15, 17, 21, 24]
+    room[appliance_breaks][1] = [6, 19, 24]
     room[appliance_breaks][2] = []
     room[appliance_breaks][3] = []
     room[appliance_breaks][4] = []
@@ -205,18 +242,30 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Night | Unoccupied setback for thermostats
     # == == == == == == == == == == == == == == == == == == == ==
-    room[setback][0:room_num] = 1 # (1 = YES, 0 = NO)
+    for rm in range(0, room_num):
+        room[setback][rm] = 1  # (1 = YES, 0 = NO)
+        room[set_back_temp][rm] = 3  # Number of degrees celsiusfor setback
 
-    room[set_back_temp][0:room_num] = 3 #Number of degrees celsiusfor setback
+        # Do people sleep in the room?
+        # ----------------------------
+        # This implies that during occupancy setback temperatures could be valid  and lights could be off
+        # Examples: Residential building | Hotel room | Hospital ward
 
-    # Do people sleep in the room?
-    # ----------------------------
-    # This implies that during occupancy setback temperatures could be valid  and lights could be off
-    # Examples: Residential building | Hotel room | Hospital ward
+        room[night][rm] = 1  # Use with thermostats
+        room[night_DHW][rm] = 1  # Use with DHW
+        room[night_light][rm] = 1  # Use with lighting
+        # Ventilation and infiltration data
+        # == == == == == == == == == == == == == == == == == == == =
 
-    room[night][0:room_num]= 1  #Use with thermostats
-    room[night_DHW][0:room_num] = 1 #Use with DHW
-    room[night_light][0:room_num] = 1 #Use with lighting
+        # Is the building mechanically ventilated or not? (1 for YES, 0 for NO)
+        # ---------------------------------------------------------------------
+        room[mech_vent][rm] = 0
+
+        room[pressurisation][rm] = 0
+
+        # What is the nominal infiltration value in ACH?
+        # ----------------------------------------------
+        room[infiltration_rate_nominal][rm] = 0.3
 
     # Define nominal night time hours
     # -------------------------------
@@ -225,20 +274,10 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     sleep_var = np.random.randint(sleep - 1, sleep + 1, size=(365, prof_number))
     wake_var = np.random.randint(wake - 1, wake + 1, size=(365, prof_number))
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # Ventilation and infiltration data
-    # == == == == == == == == == == == == == == == == == == == =
 
-    # Is the building mechanically ventilated or not? (1 for YES, 0 for NO)
-    # ---------------------------------------------------------------------
-    room[mech_vent][0:room_num] = 0
-
-    room[pressurisation][0:room_num] = 0
-
-    # What is the nominal infiltration value in ACH?
-    # ----------------------------------------------
-    room[infiltration_rate_nominal][0:room_num] = 0.3
 
     # Do you want infiltration uncertainty?
     # -------------------------------------
@@ -268,7 +307,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # --------------
     filename = r'/Users/portia_murray/Desktop/03_CESAR_Tool_the_15022018_PM/01_Code/CESAR/SIA_data_for_MATLAB.xlsx'
     sheet = 'Eingabedaten_edit'
-    db2024 = pd.read_excel(filename, sheet, usecols='C:DL', skiprows=9, index_col='Building Name')
+    db2024 = pd.read_excel(filename, sheet, usecols='C:DL', skiprows=9)
 
     # Creationof days(Mondays, Tuesdays, etc.) for a full year
     # ----------------------------------------------------------
@@ -329,17 +368,17 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # Repeat the nominal monthly profile values for each day and each hour of the year
         # --------------------------------------------------------------------------------
-        room(rm).daily_variation_nominal = rle_cumsum_diff(room(rm).monthly_variation_nominal, days_per_month) # repeat each monthly variation value as many times as the days of the month
-        room(rm).yearly_variation_nominal = rle_cumsum_diff(room(rm).monthly_variation_nominal, 24 * days_per_month) # repeat each monthly variation value for each hour based on the month it belongs
+        room[daily_variation_nominal][rm] = rle_cumsum_diff(room[monthly_variation_nominal][rm], days_per_month) # repeat each monthly variation value as many times as the days of the month
+        room[yearly_variation_nominal][rm] = rle_cumsum_diff(room[monthly_variation_nominal][rm], 24 * days_per_month) # repeat each monthly variation value for each hour based on the month it belongs
 
         # Repeat the variable monthly profiles values for each day and each hour of the year
         # ----------------------------------------------------------------------------------
-        room(rm).daily_variation_variable = np.zeros(365, prof_number)
-        room(rm).yearly_variation_variable = np.zeros(8760, prof_number)
+        room[daily_variation_variable][rm] = np.zeros(365, prof_number)
+        room[yearly_variation_variable][rm] = np.zeros(8760, prof_number)
 
         for i in range(0,prof_number):
-            room(rm).daily_variation_variable(:, i) = rle_cumsum_diff(room(rm).monthly_variation_variable(:, i)', days_per_month')'
-            room(rm).yearly_variation_variable(:, i) = rle_cumsum_diff(room(rm).monthly_variation_variable(:, i)', 24 * days_per_month')'
+            room[daily_variation_variable][rm][:, i] = rle_cumsum_diff(room[monthly_variation_variable][rm][:, i], days_per_month)
+            room[yearly_variation_variable][rm][:, i] = rle_cumsum_diff(room[monthly_variation_variable][rm][:, i], 24 * days_per_month)
 
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,62 +388,60 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # Initialization of occupancy profile \
         # ----------------------------------- \
-        room(rm).yearly_occupancy_nominal = np.zeros(8760, 1)
-        room(rm).yearly_occupancy_variable = np.zeros(8760, prof_number);
+        room[yearly_occupancy_nominal][rm] = np.zeros(8760, 1)
+        room[yearly_occupancy_variable][rm] = np.zeros(8760, prof_number)
 
         # Creation of occupancy profile according to monthly nominal and variable schedules
         # ----------------------------------------------------------------------------------
         for i in range(0,365):
-            room(rm).yearly_occupancy_nominal((i - 1) * 24 + 1:i * 24) = room(rm).daily_occupancy_nominal. * room(rm).daily_variation_nominal(i)
+            room[yearly_occupancy_nominal][rm][(i - 1) * 24 + 1:i * 24] = room[rm][daily_occupancy_nominal] * room[daily_variation_nominal][rm][i]
         for j in range(0,prof_number):
-            room(rm).yearly_occupancy_variable((i - 1) * 24 + 1:i * 24, j) = room(rm).daily_occupancy_nominal. * room(rm).daily_variation_variable(i, j)
+            room[yearly_occupancy_variable][rm][(i - 1) * 24 + 1:i * 24, j] = room[daily_occupancy_nominal][rm] * room[daily_variation_variable][rm][i, j]
 
         # Add vertical variability to the occupancy profiles
         # --------------------------------------------------
 
         # Create random values in the range[-vert_var, vert_var] for each hour of each variable hourly occupancy profile
         # ------------------------------------------------------------------------
-        X0 = -vert_var + (vert_var - (-vert_var)) * rand(8760, prof_number)
+        X0 = -vert_var + (vert_var - (-vert_var)) * np.random.rand(8760, prof_number)
 
         # Apply vertical variability to hourly profiles
         # -----------------------------------------------
-        room(rm).yearly_occupancy_variable = room(rm).yearly_occupancy_variable.* (1 + X0)
+        room[yearly_occupancy_variable][rm] = room[yearly_occupancy_variable][rm]* (1 + X0)
 
         # Correct for weekend days
         # ------------------------
-        switch room(rm).ruhetage
-        case 1
-        room(rm).yearly_occupancy_nominal(day_for_each_hour_of_year == 7) = 0
-        room(rm).yearly_occupancy_variable(day_for_each_hour_of_year == 7,:) = 0
-        case 2
-        room(rm).yearly_occupancy_nominal(day_for_each_hour_of_year == 6) = 0
-        room(rm).yearly_occupancy_nominal(day_for_each_hour_of_year == 7) = 0
-        room(rm).yearly_occupancy_variable(day_for_each_hour_of_year == 6,:) = 0
-        room(rm).yearly_occupancy_variable(day_for_each_hour_of_year == 7,:) = 0
+        if room[ruhetage][rm]== 1:
+            room[yearly_occupancy_nominal][rm][day_for_each_hour_of_year == 6] = 0
+            room[yearly_occupancy_variable][rm][day_for_each_hour_of_year == 6,:] = 0
+        elif room[ruhetage][rm]== 2:
+            room[yearly_occupancy_nominal][rm][day_for_each_hour_of_year == 5] = 0
+            room[yearly_occupancy_nominal][rm][day_for_each_hour_of_year == 6] = 0
+            room[yearly_occupancy_variable][rm][day_for_each_hour_of_year == 5,:] = 0
+            room[yearly_occupancy_variable][rm][day_for_each_hour_of_year == 6,:] = 0
 
-        room(rm).yearly_occupancy_variable(room(rm).yearly_occupancy_variable > 1) = 1
+        room[yearly_occupancy_variable][rm][room[yearly_occupancy_variable ][rm]> 1] = 1
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         # Add horizontal variability to the occupancy profiles
         # == == == == == == == == == == == == == == == == == == == == == == == == ==
-        room(rm).yearly_occupancy_variable = horizontal_variability(room(rm).yearly_occupancy_variable,room(rm).occ_breaks)
+        room[yearly_occupancy_variable][rm] = horizontal_variability(room[yearly_occupancy_variable][rm],room[occ_breaks][rm])
 
         # Constant nighttime occupancy if place where people sleep
         # (Correction required only for the variable case)
         # --------------------------------------------------------
 
-        if room(rm).night == 1:
+        if room[night][rm] == 1:
             for j in range(0,prof_number):
-                for i in range(0:365):
-                if i == 1:
-                    room(rm).yearly_occupancy_variable(i:(wake_var(i, j) - 1), j) = room(rm).yearly_variation_variable(i:(wake_var(i,j) - 1), j)
-                    room(rm).yearly_occupancy_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_variation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j);
-        elif:
-            i == 365
-            room(rm).yearly_occupancy_variable((24 * i - (24 - sleep_var(i, j))):end, j) = room(rm).yearly_variation_variable((24 * i - (24 - sleep_var(i, j))):end, j)
+                for i in range(0,365):
+                    if i == 1:
+                        room[yearly_occupancy_variable][rm][i:[wake_var[i, j] - 1], j] = room[yearly_variation_variable][rm][i:[wake_var[i,j] - 1], j]
+                        room[yearly_occupancy_variable][rm][[24 * i - [24 - sleep_var[i, j]]]:[24 * i + [wake_var[i, j] - 1]], j] = room[yearly_variation_variable][rm][[24 * i - [24 - sleep_var[i, j]]]:[24 * i + [wake_var[i, j] - 1]], j]
+        elif i == 365:
+            room[yearly_occupancy_variable][rm][[24 * i - [24 - sleep_var[i, j]]]:end, j] = room[yearly_variation_variable][rm][[24 * i - [24 - sleep_var[i, j]]]:end, j]
         else:
-            room(rm).yearly_occupancy_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_variation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j);
+            room[yearly_occupancy_variable][rm][[24 * i - [24 - sleep_var[i, j]]]:[24 * i + [wake_var[i, j] - 1], j] = room[yearly_variation_variable][rm][[24 * i - [24 - sleep_var[i, j]]]:[24 * i + [wake_var[i, j] - 1]], j]
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -413,7 +450,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # Number of people per unit area (nominal, minimum, maximum)
         # ----------------------------------------------------------
-        room(rm).area_per_person_nominal = db2024(room(rm).row, 3) # m2 / Person
+        room[](rm).area_per_person_nominal = db2024(room(rm).row, 3) # m2 / Person
         room(rm).area_per_person_min = db2024(room(rm).row, 106) # m2 / Person
         room(rm).area_per_person_max = db2024(room(rm).row, 105) # m2 / Person
 
@@ -443,8 +480,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # Create activity profile \
         # ----------------------- \
-        room(rm).yearly_activity_nominal = repmat(room(rm).activity_nominal, 8760, 1)
-        room(rm).yearly_activity_variable = repmat(room(rm).activity_variable', 8760, 1)
+        room[rm].yearly_activity_nominal = repmat(room(rm).activity_nominal, 8760, 1)
+        room[rm].yearly_activity_variable = repmat(room(rm).activity_variable', 8760, 1)
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -496,80 +533,58 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     end
     end
 
-    if area_per_person_nominal
-    ~ = 0
+    if area_per_person_nominal ~ = 0
     yearly_activity_nominal = yearly_activity_nominal / (1 / area_per_person_nominal) / sum(cat(1, room.area));
-    yearly_activity_nominal = repmat(yearly_activity_nominal, 8760, 1); % Creation
-    of
-    activity
-    profile
-    end
+    yearly_activity_nominal = repmat(yearly_activity_nominal, 8760, 1); % Creation of activity profile end
 
     for j = 1:1:prof_number
     yearly_occupancy_variable(:, j) = zeros(8760, 1);
     yearly_activity_variable(j) = 0;
     for rm = 1:1:room_num
-                 % Variable
-    values
-    % ---------------
+    # Variable values
+    # ---------------
     if room(rm).area_per_person_nominal == 0
     yearly_occupancy_variable(:, j) = yearly_occupancy_variable(:, j);
     yearly_activity_variable(j) = yearly_activity_variable(j);
     else
     yearly_occupancy_variable(:, j) = yearly_occupancy_variable(:, j) + (room(rm).area / sum(cat(1, room.area))) * room(
-        rm).yearly_occupancy_variable(:, j) *(1 / room(rm).area_per_person_variable(j)). / (
-                1 / area_per_person_variable(j));
-    yearly_activity_variable(j) = yearly_activity_variable(j) + room(rm).area * room(rm).activity_variable(j) * (
-                1 / room(rm).area_per_person_variable(j));
+        rm).yearly_occupancy_variable(:, j) *(1 / room(rm).area_per_person_variable(j)). / (1 / area_per_person_variable(j));
+    yearly_activity_variable(j) = yearly_activity_variable(j) + room(rm).area * room(rm).activity_variable(j) * (1 / room(rm).area_per_person_variable(j));
     end
     end
     end
 
-    yearly_activity_variable = yearly_activity_variable
-    ' ./ (1./area_per_person_variable) / sum(cat(1, room.area));
+    yearly_activity_variable = yearly_activity_variable ./ (1./area_per_person_variable) / sum(cat(1, room.area));
     yearly_activity_variable = repelem(yearly_activity_variable, 1, 8760)
-    '; % Creation of activity profile
+    # Creation of activity profile
 
-    % % Thermostats
-    % == == == == == ==
+    # Thermostats
+    # == == == == == ==
 
     for rm = 1:1:room_num
 
-                 % Thermostat
-    values
-    % == == == == == == == == =
+                 # Thermostat values
+    # == == == == == == == == =
 
-    % Heating
-    setpoints(nominal, minimum, maximum) \
-    % --------------------------------------------- \
-        room(rm).therm_h_nominal = db2024(room(rm).row, 2);
+    # Heating setpoints(nominal, minimum, maximum) \
+    # --------------------------------------------- \
+    room(rm).therm_h_nominal = db2024(room(rm).row, 2);
     room(rm).therm_h_min = db2024(room(rm).row, 107);
     room(rm).therm_h_max = db2024(room(rm).row, 108);
 
-    % Cooling
-    setpoints(nominal, minimum, maximum) \
-    % --------------------------------------------- \
-        room(rm).therm_c_nominal = db2024(room(rm).row, 1);
+    # Cooling setpoints(nominal, minimum, maximum) \
+    # --------------------------------------------- \
+    room(rm).therm_c_nominal = db2024(room(rm).row, 1);
     room(rm).therm_c_min = db2024(room(rm).row, 109);
     room(rm).therm_c_max = db2024(room(rm).row, 110);
 
-    % SAMPLE
-    FROM
-    NORMAL
-    DISTRIBUTIONS
-    % == == == == == == == == == == == == == == == ==
+    # SAMPLE FROM NORMAL DISTRIBUTIONS
+    # == == == == == == == == == == == == == == == ==
     room(rm).therm_h_variable = normrnd(room(rm).therm_h_nominal, 1, [prof_number, 1]);
     room(rm).therm_c_variable = normrnd(room(rm).therm_c_nominal, 1, [prof_number, 1]);
 
-    % Prevent
-    heating
-    setpoint
-    being
-    higher
-    than
-    cooling
-    setpoint \
-    % ----------------------------------------------------------- \
+    # Prevent heating setpoint being higher than cooling setpoint \
+    # ----------------------------------------------------------- \
         non_compliant_points = find(room(rm).therm_h_variable > room(rm).therm_c_variable);
     if isempty(non_compliant_points) == 0
     for nc = 1:1:max(size(non_compliant_points))
@@ -580,170 +595,104 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     end
     end
 
-    % SAMPLE
-    FROM
-    TRIANGULAR
-    DISTRIBUTIONS
-    % == == == == == == == == == == == == == == == == == ==
-    % % Create
-    triangular
-    distribution
-    % % ------------------------------
-    % x0 = [room(rm).therm_h_min - 1, room(rm).therm_h_max + 1];
-    % [x, ~] = fsolve( @ (x)
-    my_triang(x, room(rm).therm_h_min, room(rm).therm_h_max, room(rm).therm_h_nominal), x0); % Call
-    solver
-    %
-    % % Sample
-    from triangular distribution
-    % % -----------------------------------
-    % pd = makedist('Triangular', 'a', x(1), 'b', room(rm).therm_h_nominal, 'c', x(2));
-    % room(rm).therm_h_variable = random(pd, value_number, 1);
-    %
-    % % Create
-    triangular
-    distribution
-    % % ------------------------------
-    % x0 = [room(rm).therm_c_min - 1, room(rm).therm_c_max + 1];
-    % [x, ~] = fsolve( @ (x)
-    my_triang(x, room(rm).therm_c_min, room(rm).therm_c_max, room(rm).therm_c_nominal), x0); % Call
-    solver
-    %
-    % % Sample
-    from triangular distribution
-    % % -----------------------------------
-    % pd1 = makedist('Triangular', 'a', x(1), 'b', room(rm).therm_c_nominal, 'c', x(2));
-    % room(rm).therm_c_variable = random(pd1, value_number, 1);
+    # SAMPLE FROM TRIANGULAR DISTRIBUTIONS
+    # == == == == == == == == == == == == == == == == == ==
+    # Create triangular distribution
+    # ------------------------------
+    x0 = [room(rm).therm_h_min - 1, room(rm).therm_h_max + 1]
+    [x, ~] = fsolve( @ (x)my_triang(x, room(rm).therm_h_min, room(rm).therm_h_max, room(rm).therm_h_nominal), x0); # Callsolver
+    # Sample from triangular distribution
+    # -----------------------------------
+     pd = makedist('Triangular', 'a', x(1), 'b', room(rm).therm_h_nominal, 'c', x(2));
+    # room(rm).therm_h_variable = random(pd, value_number, 1)
+    #
+    # Create triangular distribution
+    # ------------------------------
+    # x0 = [room(rm).therm_c_min - 1, room(rm).therm_c_max + 1];
+    # [x, ~] = fsolve( @ (x)
+    my_triang(x, room(rm).therm_c_min, room(rm).therm_c_max, room(rm).therm_c_nominal), x0)# Call solver
+    #
+    # Sample from triangular distribution
+    # -----------------------------------
+    # pd1 = makedist('Triangular', 'a', x(1), 'b', room(rm).therm_c_nominal, 'c', x(2));
+    # room(rm).therm_c_variable = random(pd1, value_number, 1);
 
-    % % Prevent
-    heating
-    setpoint
-    being
-    higher
-    than
-    cooling
-    setpoint
-    % % -----------------------------------------------------------
-    % non_compliant_points = find(room(rm).therm_h_variable > room(rm).therm_c_variable);
-    % if isempty(non_compliant_points) == 0
-        % for nc = 1:1:max(size(non_compliant_points))
-    % while room(rm).therm_h_variable(non_compliant_points(nc)) > room(rm).therm_c_variable(non_compliant_points(nc))
-        % room(rm).therm_h_variable(non_compliant_points(nc)) = random(pd, 1);
-    % room(rm).therm_c_variable(non_compliant_points(nc)) = random(pd1, 1);
-    % end
-    % end
-    % end
+    # Prevent heating setpoint being higher than cooling setpoint
+    # -----------------------------------------------------------
+    # non_compliant_points = find(room(rm).therm_h_variable > room(rm).therm_c_variable);
+    # if isempty(non_compliant_points) == 0
+        # for nc = 1:1:max(size(non_compliant_points))
+    # while room(rm).therm_h_variable(non_compliant_points(nc)) > room(rm).therm_c_variable(non_compliant_points(nc))
+        # room(rm).therm_h_variable(non_compliant_points(nc)) = random(pd, 1);
+    # room(rm).therm_c_variable(non_compliant_points(nc)) = random(pd1, 1);
 
-    room(rm).therm_h_variable = round(room(rm).therm_h_variable, 1); % round
-    to
-    1
-    decimal
-    digit
-    room(rm).therm_c_variable = round(room(rm).therm_c_variable, 1); % round
-    to
-    1
-    decimal
-    digit
+    room(rm).therm_h_variable = round(room(rm).therm_h_variable, 1)# round to 1 decimal digit
+    room(rm).therm_c_variable = round(room(rm).therm_c_variable, 1); # round to 1 decimal digit
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    % Create
-    thermostat
-    profiles
-    % == == == == == == == == == == == == ==
+    # Create thermostat profiles
+    # == == == == == == == == == == == == ==
     room(rm).yearly_thermostat_heating_nominal = repmat(room(rm).therm_h_nominal, 8760, 1);
     room(rm).yearly_thermostat_cooling_nominal = repmat(room(rm).therm_c_nominal, 8760, 1);
 
-    room(rm).yearly_thermostat_heating_variable = repmat(room(rm).therm_h_variable
-    ', 8760, 1);
-    room(rm).yearly_thermostat_cooling_variable = repmat(room(rm).therm_c_variable
-    ', 8760, 1);
+    room(rm).yearly_thermostat_heating_variable = repmat(room(rm).therm_h_variable', 8760, 1);
+    room(rm).yearly_thermostat_cooling_variable = repmat(room(rm).therm_c_variable', 8760, 1);
 
-    % Unoccupied
-    setback
+    # Unoccupied setback
     if room(rm).setback == 1
-    room(rm).yearly_thermostat_heating_nominal(room(rm).yearly_occupancy_nominal == 0) = room(
-        rm).yearly_thermostat_heating_nominal(room(rm).yearly_occupancy_nominal == 0) - room(rm).set_back_temp;
-    room(rm).yearly_thermostat_cooling_nominal(room(rm).yearly_occupancy_nominal == 0) = room(
-        rm).yearly_thermostat_cooling_nominal(room(rm).yearly_occupancy_nominal == 0) + room(rm).set_back_temp;
+    room(rm).yearly_thermostat_heating_nominal(room(rm).yearly_occupancy_nominal == 0) = room(rm).yearly_thermostat_heating_nominal(room(rm).yearly_occupancy_nominal == 0) - room(rm).set_back_temp
+    room(rm).yearly_thermostat_cooling_nominal(room(rm).yearly_occupancy_nominal == 0) = room(rm).yearly_thermostat_cooling_nominal(room(rm).yearly_occupancy_nominal == 0) + room(rm).set_back_temp
 
-    room(rm).yearly_thermostat_heating_variable(room(rm).yearly_occupancy_variable == 0) = room(
-        rm).yearly_thermostat_heating_variable(room(rm).yearly_occupancy_variable == 0) - room(rm).set_back_temp;
-    room(rm).yearly_thermostat_cooling_variable(room(rm).yearly_occupancy_variable == 0) = room(
-        rm).yearly_thermostat_cooling_variable(room(rm).yearly_occupancy_variable == 0) + room(rm).set_back_temp;
-    end
+    room(rm).yearly_thermostat_heating_variable(room(rm).yearly_occupancy_variable == 0) = room(rm).yearly_thermostat_heating_variable(room(rm).yearly_occupancy_variable == 0) - room(rm).set_back_temp
+    room(rm).yearly_thermostat_cooling_variable(room(rm).yearly_occupancy_variable == 0) = room(rm).yearly_thermostat_cooling_variable(room(rm).yearly_occupancy_variable == 0) + room(rm).set_back_temp
 
-    % Night
-    setback
-    for nominal profile
-    if room(rm).night == 1
-    for i = 1:365
-    if i == 1
-       % Heating
-    room(rm).yearly_thermostat_heating_nominal(i:(wake - 1)) = room(rm).yearly_thermostat_heating_nominal(i:(
-                wake - 1)) - room(rm).set_back_temp;
-    room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(
-        rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room(rm).set_back_temp;
-    % Cooling
-    room(rm).yearly_thermostat_cooling_nominal(i:(wake - 1)) = room(rm).yearly_thermostat_cooling_nominal(i:(
-                wake - 1)) + room(rm).set_back_temp;
-    room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(
-        rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room(rm).set_back_temp;
-    elseif
-    i == 365
-    % Heating
-    room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):end) = room(
-        rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):end) - room(rm).set_back_temp;
-    % Cooling
-    room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):end) = room(
-        rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):end) + room(rm).set_back_temp;
-    else
-    % Heating
-    room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(
-        rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room(rm).set_back_temp;
-    % Cooling
-    room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(
-        rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room(rm).set_back_temp;
+    # Night setback for nominal profile
+    if room[night][rm] == 1:
+        for i in range(0:365):
+            if i == 1:
+               # Heating
+                room(rm).yearly_thermostat_heating_nominal(i:(wake - 1)) = room(rm).yearly_thermostat_heating_nominal(i:(wake - 1)) - room(rm).set_back_temp;
+                room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room(rm).set_back_temp;
+            # Cooling
+                room(rm).yearly_thermostat_cooling_nominal(i:(wake - 1)) = room(rm).yearly_thermostat_cooling_nominal(i:(wake - 1)) + room(rm).set_back_temp;
+                room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room(rm).set_back_temp;
+            elif i == 365:
+            # Heating
+                room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):end) = room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):end) - room(rm).set_back_temp;
+            # Cooling
+                room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):end) = room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):end) + room(rm).set_back_temp;
+            else:
+            # Heating
+                room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(rm).yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room(rm).set_back_temp;
+            # Cooling
+                room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(rm).yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room(rm).set_back_temp;
     end
     end
     end
 
-    % Night
-    setback
-    for variable profile
+    # Night setback for variable profile
     if room(rm).night == 1
     for j = 1:1:prof_number
     for i = 1:365
     if i == 1
-       % Heating
-    room(rm).yearly_thermostat_heating_variable(i:(wake_var(i, j) - 1), j) = room(
-        rm).yearly_thermostat_heating_variable(i:(wake_var(i, j) - 1), j) - room(rm).set_back_temp;
-    room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (
-                wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_heating_variable(
-        (24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room(rm).set_back_temp;
-    % Cooling
-    room(rm).yearly_thermostat_cooling_variable(i:(wake_var(i, j) - 1), j) = room(
-        rm).yearly_thermostat_cooling_variable(i:(wake_var(i, j) - 1), j) + room(rm).set_back_temp;
-    room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (
-                wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_cooling_variable(
-        (24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room(rm).set_back_temp;
+       # Heating
+    room(rm).yearly_thermostat_heating_variable(i:(wake_var(i, j) - 1), j) = room(rm).yearly_thermostat_heating_variable(i:(wake_var(i, j) - 1), j) - room(rm).set_back_temp;
+    room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room(rm).set_back_temp;
+    # Cooling
+    room(rm).yearly_thermostat_cooling_variable(i:(wake_var(i, j) - 1), j) = room(rm).yearly_thermostat_cooling_variable(i:(wake_var(i, j) - 1), j) + room(rm).set_back_temp;
+    room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room(rm).set_back_temp;
     elseif
     i == 365
-    % Heating
-    room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):end, j) = room(
-        rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):end, j) - room(rm).set_back_temp;
-    % Cooling
-    room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):end, j) = room(
-        rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):end, j) + room(rm).set_back_temp;
+    # Heating
+    room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):end, j) = room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):end, j) - room(rm).set_back_temp;
+    # Cooling
+    room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):end, j) = room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):end, j) + room(rm).set_back_temp;
     else
-    % Heating
-    room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (
-                wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_heating_variable(
-        (24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room(rm).set_back_temp;
-    % Cooling
-    room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (
-                wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_cooling_variable(
-        (24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room(rm).set_back_temp;
+    # Heating
+    room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_heating_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room(rm).set_back_temp;
+    # Cooling
+    room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_thermostat_cooling_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room(rm).set_back_temp;
     end
     end
     end
@@ -751,272 +700,210 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     end
 
-    % Synthesizing
-    among
-    room
-    types
-    % == == == == == == == == == == == == == == =
+    # Synthesizing among room types
+    # == == == == == == == == == == == == == == =
 
-    % Initialization \
-      % -------------- \
-    therm_h_nominal = 0;
-    therm_c_nominal = 0;
-    yearly_thermostat_heating_nominal = 0;
-    yearly_thermostat_cooling_nominal = 0;
+    # Initialization \
+    # -------------- \
+    therm_h_nominal = 0
+    therm_c_nominal = 0
+    yearly_thermostat_heating_nominal = 0
+    yearly_thermostat_cooling_nominal = 0
 
-    therm_h_variable = 0;
-    therm_c_variable = 0;
-    yearly_thermostat_heating_variable = 0;
-    yearly_thermostat_cooling_variable = 0;
+    therm_h_variable = 0
+    therm_c_variable = 0
+    yearly_thermostat_heating_variable = 0
+    yearly_thermostat_cooling_variable = 0
 
-    % Calculation
-      % -----------
-    for rm = 1:1:room_num
-                 % Nominal
-    values \
-    % -------------- \
-        therm_h_nominal = therm_h_nominal + (room(rm).area * room(rm).therm_h_nominal) / sum(cat(1, room.area));
-    therm_c_nominal = therm_c_nominal + (room(rm).area * room(rm).therm_c_nominal) / sum(cat(1, room.area));
-    yearly_thermostat_heating_nominal = yearly_thermostat_heating_nominal + (
-                room(rm).area * room(rm).yearly_thermostat_heating_nominal) / sum(cat(1, room.area));
-    yearly_thermostat_cooling_nominal = yearly_thermostat_cooling_nominal + (
-                room(rm).area * room(rm).yearly_thermostat_cooling_nominal) / sum(cat(1, room.area));
-    % Variable
-    values \
-    % --------------- \
-        therm_h_variable = therm_h_variable + (room(rm).area * room(rm).therm_h_variable) / sum(cat(1, room.area));
-    therm_c_variable = therm_c_variable + (room(rm).area * room(rm).therm_c_variable) / sum(cat(1, room.area));
-    yearly_thermostat_heating_variable = yearly_thermostat_heating_variable + (
-                room(rm).area * room(rm).yearly_thermostat_heating_variable) / sum(cat(1, room.area));
-    yearly_thermostat_cooling_variable = yearly_thermostat_cooling_variable + (
-                room(rm).area * room(rm).yearly_thermostat_cooling_variable) / sum(cat(1, room.area));
+    # Calculation
+    # -----------
+    for rm in range(0,room_num):
+        # Nominal values \
+        # -------------- \
+        therm_h_nominal = therm_h_nominal + (room(rm).area * room(rm).therm_h_nominal) / sum(cat(1, room.area))
+        therm_c_nominal = therm_c_nominal + (room(rm).area * room(rm).therm_c_nominal) / sum(cat(1, room.area))
+        yearly_thermostat_heating_nominal = yearly_thermostat_heating_nominal + (room(rm).area * room(rm).yearly_thermostat_heating_nominal) / sum(cat(1, room.area))
+        yearly_thermostat_cooling_nominal = yearly_thermostat_cooling_nominal + (room(rm).area * room(rm).yearly_thermostat_cooling_nominal) / sum(cat(1, room.area))
+        # Variable values \
+    # --------------- \
+        therm_h_variable = therm_h_variable + (room(rm).area * room(rm).therm_h_variable) / sum(cat(1, room.area))
+        therm_c_variable = therm_c_variable + (room(rm).area * room(rm).therm_c_variable) / sum(cat(1, room.area))
+        yearly_thermostat_heating_variable = yearly_thermostat_heating_variable + (room(rm).area * room(rm).yearly_thermostat_heating_variable) / sum(cat(1, room.area))
+        yearly_thermostat_cooling_variable = yearly_thermostat_cooling_variable + (room(rm).area * room(rm).yearly_thermostat_cooling_variable) / sum(cat(1, room.area))
     end
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    % % Ventilation
-    % == == == == == ==
+    # Ventilation
+    # == == == == == ==
 
-    for rm = 1:1:room_num
+    for rm in range(0,room_num):
 
-                 % Create
-    ventilation
-    profile \
-    % -------------------------- \
-        room(rm).yearly_ventilation_nominal = room(rm).yearly_occupancy_nominal;
-    room(rm).yearly_ventilation_variable = room(rm).yearly_occupancy_variable;
+                 # Create ventilation profile \
+    # -------------------------- \
+        room(rm).yearly_ventilation_nominal = room(rm).yearly_occupancy_nominal
+        room(rm).yearly_ventilation_variable = room(rm).yearly_occupancy_variable;
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      % Ventilation
-    rate
-    % == == == == == == == ==
-    room(rm).ventilation_nominal = db2024(room(rm).row, 24) / 3600; % m3 / m2s
-    room(rm).ventilation_nominal_per_person = db2024(room(rm).row, 22); % m3 / (Ph)
-    room(rm).ventilation_night_nominal_per_person = db2024(room(rm).row, 23); % m3 / (
-        Ph); !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! CHECK!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Ventilation rate
+    # == == == == == == == ==
+        room[ventilation_nominal][rm] = db2024(room(rm).row, 24) / 3600 # m3 / m2s
+        room[rm].ventilation_nominal_per_person = db2024(room(rm).row, 22) # m3 / (Ph)
+        room[rm].ventilation_night_nominal_per_person = db2024(room(rm).row, 23) # m3 / (Ph)
 
     if vent_uncertainty == 1
-            % If we consider the ventilation rate per person variable, then:
-        %
-    ---------------------------------------------------------------
-    if room(rm).ventilation_nominal_per_person == 0 % e.g.
-    for a kitchen or a bathroom
-    room(rm).ventilation_variable = normrnd(room(rm).ventilation_nominal, room(rm).ventilation_nominal / 10, [value_number 1]); % m3 / (m2s)
+            # If we consider the ventilation rate per person variable, then:
+    #---------------------------------------------------------------
+    if room(rm).ventilation_nominal_per_person == 0 # e.g. for a kitchen or a bathroom
+    room(rm).ventilation_variable = normrnd(room(rm).ventilation_nominal, room(rm).ventilation_nominal / 10, [value_number 1]); # m3 / (m2s)
     else
-    room(rm).ventilation_per_person_variable = normrnd(room(rm).ventilation_nominal_per_person, room(rm).ventilation_nominal_per_person / 10, [value_number 1]); % m3 / (Ph)
-    room(rm).ventilation_variable = room(rm).ventilation_per_person_variable./ room(rm).area_per_person_variable / 3600; % m3 / (m2s)
+    room(rm).ventilation_per_person_variable = normrnd(room(rm).ventilation_nominal_per_person, room(rm).ventilation_nominal_per_person / 10, [value_number 1]); # m3 / (Ph)
+    room(rm).ventilation_variable = room(rm).ventilation_per_person_variable./ room(rm).area_per_person_variable / 3600 # m3 / (m2s)
     end
     else
-    % If per person ventilation rate uncertainty is not considered, then:
-        %
-    ------------------------------------------------------------------- \
-        room(rm).ventilation_variable = repmat(room(rm).ventilation_nominal, value_number, 1); % m3 / m2s
+    # If per person ventilation rate uncertainty is not considered, then:
+        #------------------------------------------------------------------- \
+        room(rm).ventilation_variable = repmat(room(rm).ventilation_nominal, value_number, 1); # m3 / m2s
     end
 
-    % Nominal
-    profiles
+    # Nominal profiles
     if room(rm).ventilation_night_nominal_per_person
     ~ = 0
     for i = 1:365
     if i == 1
-    room(rm).yearly_ventilation_nominal(i:(wake - 1)) = room(rm).yearly_ventilation_nominal(i:(wake - 1)) *room(
-        rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
-    room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + wake)) = room(rm).yearly_ventilation_nominal(
-        (24 * i - (24 - sleep)):(24 * i + wake)) *room(rm).ventilation_night_nominal_per_person / room(
-        rm).ventilation_nominal_per_person;
+    room(rm).yearly_ventilation_nominal(i:(wake - 1)) = room(rm).yearly_ventilation_nominal(i:(wake - 1)) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
+    room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + wake)) = room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + wake)) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
 
-    elseif
-    i == 365
-    room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):end) = room(rm).yearly_ventilation_nominal(
-        (24 * i - (24 - sleep)):end) *room(rm).ventilation_night_nominal_per_person / room(
-        rm).ventilation_nominal_per_person;
+    elseif i == 365
+        room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):end) = room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):end) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
     else
-    room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(
-        rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) *room(
-        rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
+    room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room(rm).yearly_ventilation_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
     end
     end
     end
 
-    % Variable
-    profiles
+    # Variable profiles
     if room(rm).ventilation_night_nominal_per_person
     ~ = 0
     for j = 1:1:prof_number
     for i = 1:365
-    if i == 1
-    room(rm).yearly_ventilation_variable(i:(wake_var(i, j) - 1), j) = room(rm).yearly_ventilation_variable(i:(wake_var(
-        i, j) - 1), j) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
-    room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + wake_var(i, j)), j) = room(
-        rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + wake_var(i, j)), j) *room(
-        rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
-
-    elseif
-    i == 365
+    if i == 1:
+        room(rm).yearly_ventilation_variable(i:(wake_var(i, j) - 1), j) = room(rm).yearly_ventilation_variable(i:(wake_var(i, j) - 1), j) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
+        room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + wake_var(i, j)), j) = room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + wake_var(i, j)), j) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
+    elif i == 365:
     room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):end, j) = room(
         rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):end, j) *room(
         rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
     else
-    room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(
-        rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) *room(
-        rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
+    room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room(rm).yearly_ventilation_variable((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) *room(rm).ventilation_night_nominal_per_person / room(rm).ventilation_nominal_per_person;
     end
     end
     end
     end
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     end
 
-    % Synthesizing
-    among
-    room
-    types
-    % == == == == == == == == == == == == == == =
+    # Synthesizing among room types
+    # == == == == == == == == == == == == == == =
 
-    % Initialization \
-      % -------------- \
-    ventilation_nominal = 0;
-    yearly_ventilation_nominal = 0;
+    #Initialization \
+      # -------------- \
+    ventilation_nominal = 0
+    yearly_ventilation_nominal = 0
 
-    ventilation_variable = 0;
+    ventilation_variable = 0
 
-    % Calculation
-      % -----------
+    # Calculation
+    # -----------
     for rm = 1:1:room_num
-                 % Nominal
-    values \
-    % -------------- \
-        ventilation_nominal = ventilation_nominal + (room(rm).area * room(rm).ventilation_nominal) / sum(
-        cat(1, room.area));
+                 # Nominal values \
+    # -------------- \
+        ventilation_nominal = ventilation_nominal + (room(rm).area * room(rm).ventilation_nominal) / sum(cat(1, room.area))
 
-    % Variable
-    values \
-    % --------------- \
-        ventilation_variable = ventilation_variable + (room(rm).area * room(rm).ventilation_variable) / sum(
-        cat(1, room.area));
+    # Variable values \
+    # --------------- \
+        ventilation_variable = ventilation_variable + (room(rm).area * room(rm).ventilation_variable) / sum(cat(1, room.area))
     end
 
     for rm = 1:1:room_num
-                 % Nominal
-    values \
-    % -------------- \
-        yearly_ventilation_nominal = yearly_ventilation_nominal + room(rm).yearly_ventilation_nominal * (
-                room(rm).area / sum(cat(1, room.area))) * room(rm).ventilation_nominal / ventilation_nominal;
+                 # Nominal values \
+    # -------------- \
+        yearly_ventilation_nominal = yearly_ventilation_nominal + room(rm).yearly_ventilation_nominal * (room(rm).area / sum(cat(1, room.area))) * room(rm).ventilation_nominal / ventilation_nominal
     end
 
     for j = 1:1:prof_number
-    yearly_ventilation_variable(:, j) = zeros(8760, 1);
+    yearly_ventilation_variable(:, j) = zeros(8760, 1)
     for rm = 1:1:room_num
-                 % Variable
-    values
-    % ---------------
-    yearly_ventilation_variable(:, j) = yearly_ventilation_variable(:, j) + room(
-        rm).yearly_ventilation_variable(:, j) *(room(rm).area / sum(cat(1, room.area))) * room(rm).ventilation_variable(
-        j) / ventilation_variable(j);
+                 # Variable values
+    # ---------------
+    yearly_ventilation_variable(:, j) = yearly_ventilation_variable(:, j) + room(rm).yearly_ventilation_variable(:, j) *(room(rm).area / sum(cat(1, room.area))) * room(rm).ventilation_variable(j) / ventilation_variable(j);
     end
     end
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    % % Infiltration
-    profile(new)
-    % == == == == == == == == == == == == == =
+    # Infiltration profile(new)
+    # == == == == == == == == == == == == == =
 
     for rm = 1:1:room_num
 
-                 % Create
-    profile
-    for infiltration
-        % -------------------------------
+                 # Create profile for infiltration
+    # -------------------------------
     room(
-        rm).yearly_infiltration_nominal = repmat(ones(1, 1), 8760, 1); % Constant infiltration profile for the whole year
-    room(rm).yearly_infiltration_variable = repmat(ones(1, 1), 8760, prof_number); % Constant infiltration profile for the whole year
+        rm).yearly_infiltration_nominal = repmat(ones(1, 1), 8760, 1); # Constant infiltration profile for the whole year
+    room(rm).yearly_infiltration_variable = repmat(ones(1, 1), 8760, prof_number); # Constant infiltration profile for the whole year
 
-    # If the building is mechanically ventilated, the infiltration is reduced
-    % to 25 % of its nominal value during occupancy hours
-    % -------------------------------------------------------------------------
+    # If the building is mechanically ventilated, the infiltration is reduced to 25 percent of its nominal value during occupancy hours
+    # -------------------------------------------------------------------------
     if room(rm).mech_vent == 1
     if room(rm).pressurisation == 1
-    room(rm).yearly_infiltration_nominal(room(rm).yearly_occupancy_nominal > 0) = 0.25; % Infiltration not considered during occupied hours
-    room(rm).yearly_infiltration_variable(room(rm).yearly_occupancy_variable > 0) = 0.25; % Infiltration not considered during occupied hours
+    room(rm).yearly_infiltration_nominal(room(rm).yearly_occupancy_nominal > 0) = 0.25 # Infiltration not considered during occupied hours
+    room(rm).yearly_infiltration_variable(room(rm).yearly_occupancy_variable > 0) = 0.25 # Infiltration not considered during occupied hours
     end
     end
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    % Infiltration value
-    % ------------------
+    # Infiltration value
+    # ------------------
 
     if infilt_uncertainty == 1
-    % If we consider the Infiltration rate variable, then:
-        %
+    # If we consider the Infiltration rate variable, then:
+       #
     ----------------------------------------------------
-    room(rm).infiltration_rate_variable = normrnd(room(rm).infiltration_rate_nominal,
-                                                  room(rm).infiltration_rate_nominal / 5, [value_number 1]); % ACH
+    room(rm).infiltration_rate_variable = normrnd(room(rm).infiltration_rate_nominal,room(rm).infiltration_rate_nominal / 5, [value_number 1]); # ACH
     else
-    % If
-    Infiltration
-    rate
-    uncertainty is not considered, then:
-    % --------------------------------------------------------- \
-        room(rm).infiltration_rate_variable = repmat(room(rm).infiltration_rate_nominal, value_number, 1); % ACH
+    # If Infiltration rate uncertainty is not considered, then:
+    # --------------------------------------------------------- \
+        room(rm).infiltration_rate_variable = repmat(room(rm).infiltration_rate_nominal, value_number, 1); # ACH
     end
     end
 
-    % Synthesizing
-    among
-    room
-    types
-    % == == == == == == == == == == == == == == =
+    # Synthesizing among room types
+    # == == == == == == == == == == == == == == =
 
-    % Initialization \
-      % -------------- \
+    # Initialization \
+    # -------------- \
     infiltration_rate_nominal = 0;
     yearly_infiltration_nominal = 0;
 
     infiltration_rate_variable = 0;
     yearly_infiltration_variable = 0;
 
-    % Calculation
-      % -----------
+    # Calculation
+    # -----------
     for rm = 1:1:room_num
-                 % Nominal
-    values \
-    % -------------- \
-        infiltration_rate_nominal = infiltration_rate_nominal + (
-                room(rm).area * room(rm).infiltration_rate_nominal) / sum(cat(1, room.area));
-    yearly_infiltration_nominal = yearly_infiltration_nominal + (
-                room(rm).area * room(rm).yearly_infiltration_nominal) / sum(cat(1, room.area));
-    % Variable
-    values \
-    % --------------- \
-        infiltration_rate_variable = infiltration_rate_variable + (
-                room(rm).area * room(rm).infiltration_rate_variable) / sum(cat(1, room.area));
-    yearly_infiltration_variable = yearly_infiltration_variable + (
-                room(rm).area * room(rm).yearly_infiltration_variable) / sum(cat(1, room.area));
+        # Nominal values \
+        # -------------- \
+        infiltration_rate_nominal = infiltration_rate_nominal + (room(rm).area * room(rm).infiltration_rate_nominal) / sum(cat(1, room.area));
+        yearly_infiltration_nominal = yearly_infiltration_nominal + (room(rm).area * room(rm).yearly_infiltration_nominal) / sum(cat(1, room.area));
+    # Variable values \
+    # --------------- \
+        infiltration_rate_variable = infiltration_rate_variable + (room(rm).area * room(rm).infiltration_rate_variable) / sum(cat(1, room.area));
+        yearly_infiltration_variable = yearly_infiltration_variable + (room(rm).area * room(rm).yearly_infiltration_variable) / sum(cat(1, room.area));
     end
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1026,16 +913,15 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     for rm = 1:1:room_num
 
-                 # DHW profile
-    # == == == == == =
+                     # DHW profile
+        # == == == == == =
 
-    # DHW profile follows occupancy \
-    # ----------------------------- \
-    room(rm).yearly_dhw_nominal = room(rm).yearly_occupancy_nominal
-    room(rm).yearly_dhw_variable = room(rm).yearly_occupancy_variable
+        # DHW profile follows occupancy \
+        # ----------------------------- \
+        room(rm).yearly_dhw_nominal = room(rm).yearly_occupancy_nominal
+        room(rm).yearly_dhw_variable = room(rm).yearly_occupancy_variable
 
-    # DHW profile
-    for rooms that people sleep in, hence occupied at night, must  be zero during nighttime.For an office building, that is not necessary
+    # DHW profile for rooms that people sleep in, hence occupied at night, must  be zero during nighttime.For an office building, that is not necessary
     # as the occupancy during these times is equal to zero, hence, the DHW  profile will also be zero.
     # -------------------------------------------------------------------------
 
@@ -1054,8 +940,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     end
     end
 
-    % Variable
-    profiles
+    # Variable profiles
     if room(rm).night_dhw == 1
     for j = 1:prof_number
     for i = 1:365
@@ -1072,76 +957,60 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     end
     end
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    % DHW
-    values
-    % == == == == ==
+    # DHW values
+    # == == == == ==
 
-    % DHW
-    level(nominal, minimum, maximum) \
-    % ------------------------------------- \
-        room(rm).dhw_nominal = db2024(room(rm).row, 30); % W / m2
-    room(rm).dhw_min = db2024(room(rm).row, 111); % W / m2
-    room(rm).dhw_max = db2024(room(rm).row, 112); % W / m2
+    # DHW level(nominal, minimum, maximum) \
+    # ------------------------------------- \
+    room(rm).dhw_nominal = db2024(room(rm).row, 30) # W / m2
+    room(rm).dhw_min = db2024(room(rm).row, 111) # W / m2
+    room(rm).dhw_max = db2024(room(rm).row, 112)# W / m2
 
-                                                    % Create
-    triangular
-    distribution \
-    % ------------------------------ \
-        x0 = [room(rm).dhw_min - 1, room(rm).dhw_max + 1];
-    [x, fval, flag] = fsolve( @ (x)
-    my_triang(x, room(rm).dhw_min, room(rm).dhw_max, room(rm).dhw_nominal), x0); % Call
-    solver
+                                                    # Create triangular distribution \
+    # ------------------------------ \
+    x0 = [room(rm).dhw_min - 1, room(rm).dhw_max + 1]
+    [x, fval, flag] = fsolve( @ (x)my_triang(x, room(rm).dhw_min, room(rm).dhw_max, room(rm).dhw_nominal), x0) # Callsolver
 
     if flag == -2
     x(1) = room(rm).dhw_min;
     x(2) = room(rm).dhw_max;
     end
 
-    % Sample
-    from triangular distribution
-    % -----------------------------------
+    # Sample from triangular distribution
+    # -----------------------------------
     if x(1) == x(2) & & x(2) == room(rm).dhw_nominal
     room(rm).dhw_variable = zeros(value_number, 1)
     else
-    pd = makedist('Triangular', 'a', x(1), 'b', room(rm).dhw_nominal, 'c', x(2));
-    room(rm).dhw_variable = random(pd, value_number, 1);
-    room(rm).dhw_variable = round(room(rm).dhw_variable, 1); % round
-    to
-    1
-    decimal
-    digit
-    end
+    pd = makedist('Triangular', 'a', x(1), 'b', room(rm).dhw_nominal, 'c', x(2))
+    room(rm).dhw_variable = random(pd, value_number, 1)
+    room(rm).dhw_variable = round(room(rm).dhw_variable, 1)# round to 1 decimal digit
+    en
     end
 
-    % Synthesizing
-    among
-    room
-    types
-    % == == == == == == == == == == == == == == =
+    # Synthesizing among room types
+    # == == == == == == == == == == == == == == =
 
-    % Initialization \
-      % -------------- \
+    # Initialization \
+    # -------------- \
     dhw_nominal = 0;
     yearly_dhw_nominal = 0;
 
     dhw_variable = zeros(prof_number, 1);
 
-    % Calculation
-      % -----------
+    # Calculation
+    # -----------
     for rm = 1:1:room_num
-                 % Nominal
-    values
-    % --------------
+                 # Nominal values
+    # --------------
     if room(rm).dhw_nominal == 0
     dhw_nominal = dhw_nominal;
     else
     dhw_nominal = dhw_nominal + (room(rm).area * room(rm).dhw_nominal) / sum(cat(1, room.area));
     end
-    % Variable
-    values
-    % ---------------
+    # Variable values
+    # ---------------
     if room(rm).dhw_nominal == 0
     dhw_variable = dhw_variable;
     else
@@ -1150,9 +1019,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     end
 
     for rm = 1:1:room_num
-                 % Nominal
-    values
-    % --------------
+    # Nominalvalues
+    # --------------
     if dhw_nominal
     ~ = 0
     yearly_dhw_nominal = yearly_dhw_nominal + room(rm).yearly_dhw_nominal * (
@@ -1163,8 +1031,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     for j = 1:1:prof_number
     yearly_dhw_variable(:, j) = zeros(8760, 1);
     for rm = 1:1:room_num
-                 % Variable
-    values
+                 # Variable values
     # ---------------
     if dhw_variable(j)~ = 0:
         yearly_dhw_variable(:, j) = yearly_dhw_variable(:, j) + room(rm).yearly_dhw_variable(:, j) *(room(rm).area / sum(cat(1, room.area))) * room(rm).dhw_variable(j) / dhw_variable(j)
@@ -1270,7 +1137,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # -----------------------------------
     pd = makedist('Triangular', 'a', x(1), 'b', room(rm).light_density_nominal, 'c', x(2));
     room(rm).light_density_variable = random(pd, value_number, 1);
-    room(rm).light_density_variable = round(room(rm).light_density_variable, 1); % round to 1 decimal digit
+    room(rm).light_density_variable = round(room(rm).light_density_variable, 1); # round to 1 decimal digit
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1334,7 +1201,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Read nominal profile
     # --------------------
-    room(rm).daily_appliances_nominal = db2024(room(rm).row, 57:80)'; % Profile from SIA 2024
+    room(rm).daily_appliances_nominal = db2024(room(rm).row, 57:80) # Profile from SIA 2024
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1353,7 +1220,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
         rm).daily_variation_nominal(i);
     for j = 1:prof_number
     room(rm).yearly_appliances_variable((i - 1) * 24 + 1:i * 24, j) = room(rm).daily_appliances_nominal. * room(
-        rm).daily_variation_variable(i, j);
+        rm).daily_variation_variable(i, j)
 
     # Create random values in the range[-vert_var, vert_var] for each hour of each variable hourly appliance usage profile
     # ------------------------------------------------------------------------
@@ -1363,7 +1230,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # -----------------------------------------------
     room(rm).yearly_appliances_variable = room(rm).yearly_appliances_variable.* (1 + X0)
 
-    # Set yearly_appliances profile minimum to 10 % and maximum 100 %
+    # Set yearly_appliances profile minimum to 10 percent and maximum 100 percent
     # -------------------------------------------------------------
     room(rm).yearly_appliances_nominal(room(rm).yearly_appliances_nominal < 0.1) = 0.10
     room(rm).yearly_appliances_variable(room(rm).yearly_appliances_variable < 0.1) = 0.10
@@ -1393,20 +1260,20 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Appliances level value (nominal, minimum, maximum)
     # --------------------------------------------------
-    room(rm).appliances_level_nominal = db2024(room(rm).row, 6); % W / m2 % ** ** ** ** ** **
-    room(rm).appliances_level_min = db2024(room(rm).row, 7); % W / m2 % ** ** ** ** ** **
-    room(rm).appliances_level_max = db2024(room(rm).row, 8); % W / m2 % ** ** ** ** ** **
+    room(rm).appliances_level_nominal = db2024(room(rm).row, 6) # W / m2  ** ** ** ** ** **
+    room(rm).appliances_level_min = db2024(room(rm).row, 7) # W / m2  ** ** ** ** ** **
+    room(rm).appliances_level_max = db2024(room(rm).row, 8) # W / m2  ** ** ** ** ** **
 
     # Create triangular distribution
     # ------------------------------
     x0 =[room(rm).appliances_level_min - 1, room(rm).appliances_level_max + 1];
-    [x, ~] = fsolve( @ (x)my_triang(x, room(rm).appliances_level_min, room(rm).appliances_level_max, room(rm).appliances_level_nominal), x0); % Call solver
+    [x, ~] = fsolve( @ (x)my_triang(x, room(rm).appliances_level_min, room(rm).appliances_level_max, room(rm).appliances_level_nominal), x0) # Call solver
 
     # Sample from triangular distribution
     # -----------------------------------
     pd = makedist('Triangular', 'a', x(1), 'b', room(rm).appliances_level_nominal, 'c', x(2));
     room(rm).appliances_level_variable = random(pd, value_number, 1);
-    room(rm).appliances_level_variable = round(room(rm).appliances_level_variable, 1); % round to 1 decimal digit
+    room(rm).appliances_level_variable = round(room(rm).appliances_level_variable, 1) # round to 1 decimal digit
 
     end
 
@@ -1459,7 +1326,7 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Write scalar values
     # == == == == == == == == == =
-    if variable_schedules == 0: # if only nominal schedules should be generated
+    if variable_schedules == 'variable': # if only nominal schedules should be generated
         Explanations = {'This factor (m2/person) is used, along with the Zone Floor Area to determine the maximum number of people as described in the Number of People field. The choice from the method field should be Area/Person', ...
         'The heating setpoint temperature in degrees C if constant throughout the year. If the previous field is used this field should be left blank and will be ignored', ...
         'The cooling setpoint temperature in degrees C if constant throughout the year. If the previous field is used this field should be left blank and will be ignored', ...
@@ -1537,33 +1404,33 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # Occupancy
         # ---------
-        csvwrite(strcat(path_variable, bldg, '_variable_occupancy.csv'), yearly_occupancy_variable);
-        csvwrite(strcat(path_variable, bldg, '_variable_activity.csv'), yearly_activity_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_occupancy.csv'), yearly_occupancy_variable)
+        csvwrite(strcat(path_variable, bldg, '_variable_activity.csv'), yearly_activity_variable)
 
         # Thermostats
         #-----------
-        csvwrite(strcat(path_variable, bldg, '_variable_thermostat_heating.csv'), yearly_thermostat_heating_variable);
-        csvwrite(strcat(path_variable, bldg, '_variable_thermostat_cooling.csv'), yearly_thermostat_cooling_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_thermostat_heating.csv'), yearly_thermostat_heating_variable)
+        csvwrite(strcat(path_variable, bldg, '_variable_thermostat_cooling.csv'), yearly_thermostat_cooling_variable)
 
         # Infiltration
         # ------------
-        csvwrite(strcat(path_variable, bldg, '_variable_infiltration.csv'), yearly_infiltration_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_infiltration.csv'), yearly_infiltration_variable)
 
         # Ventilation
         # -----------
-        csvwrite(strcat(path_variable, bldg, '_variable_ventilation.csv'), yearly_ventilation_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_ventilation.csv'), yearly_ventilation_variable)
 
         # DHW
         # ---
-        csvwrite(strcat(path_variable, bldg, '_variable_dhw.csv'), yearly_dhw_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_dhw.csv'), yearly_dhw_variable)
 
         # Lighting
         # --------
-        csvwrite(strcat(path_variable, bldg, '_variable_lighting.csv'), yearly_lighting_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_lighting.csv'), yearly_lighting_variable)
 
         # Appliances
         # ----------
-        csvwrite(strcat(path_variable, bldg, '_variable_appliances.csv'), yearly_appliances_variable);
+        csvwrite(strcat(path_variable, bldg, '_variable_appliances.csv'), yearly_appliances_variable)
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1572,40 +1439,42 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
         # fmt =['%6.2f\n']; % formatSpec for fprintf
 
-        csvwrite(strcat(path_variable, bldg, '_area_per_person_variable.csv'), area_per_person_variable);
+        csvwrite(strcat(path_variable, bldg, '_area_per_person_variable.csv'), area_per_person_variable)
         # fid = fopen(strcat(path_variable, bldg, '_area_per_person_variable.txt'), 'wt');
         # fprintf(fid, '%6.3f\n', area_per_person_variable); fclose(fid);
 
-        fid = fopen(strcat(path_variable, bldg, '_therm_h_variable.txt'), 'wt');
+        fid = fopen(strcat(path_variable, bldg, '_therm_h_variable.txt'), 'wt')
         fprintf(fid, '%6.3f\n', therm_h_variable); fclose(fid);
 
-        fid = fopen(strcat(path_variable, bldg, '_therm_c_variable.txt'), 'wt');
-        fprintf(fid, '%6.3f\n', therm_c_variable); fclose(fid);
+        fid = fopen(strcat(path_variable, bldg, '_therm_c_variable.txt'), 'wt')
+        fprintf(fid, '%6.3f\n', therm_c_variable); fclose(fid)
 
-        csvwrite(strcat(path_variable, bldg, '_infiltration_rate_variable.csv'), infiltration_rate_variable);
+        csvwrite(strcat(path_variable, bldg, '_infiltration_rate_variable.csv'), infiltration_rate_variable)
         # fid = fopen(strcat(path_variable, bldg, '_infiltration_rate_variable.txt'), 'wt');
         # fprintf(fid, '%6.7f\n', infiltration_rate_variable); fclose(fid);
 
-        csvwrite(strcat(path_variable, bldg, '_ventilation_rate_variable.csv'), ventilation_variable);
+        csvwrite(strcat(path_variable, bldg, '_ventilation_rate_variable.csv'), ventilation_variable)
         # fid = fopen(strcat(path_variable, bldg, '_ventilation_rate_variable.txt'), 'wt');
         # fprintf(fid, '%6.7f\n', ventilation_variable); fclose(fid);
 
-        csvwrite(strcat(path_variable, bldg, '_dhw_variable.csv'), dhw_variable);
+        csvwrite(strcat(path_variable, bldg, '_dhw_variable.csv'), dhw_variable)
         # fid = fopen(strcat(path_variable, bldg, '_dhw_variable.txt'), 'wt');
         # fprintf(fid, '%6.3f\n', dhw_variable); fclose(fid);
 
-        csvwrite(strcat(path_variable, bldg, '_light_density_variable.csv'), light_density_variable);
+        csvwrite(strcat(path_variable, bldg, '_light_density_variable.csv'), light_density_variable)
         # fid = fopen(strcat(path_variable, bldg, '_light_density_variable.txt'), 'wt');
         # fprintf(fid, '%6.3f\n', light_density_variable); fclose(fid);
 
-        fid = fopen(strcat(path_variable, bldg, '_light_stp_variable.txt'), 'wt');
-        fprintf(fid, '%6.3f\n', light_stp_variable); fclose(fid);
+        fid = fopen(strcat(path_variable, bldg, '_light_stp_variable.txt'), 'wt')
+        fprintf(fid, '%6.3f\n', light_stp_variable);
+        fclose(fid)
 
-        csvwrite(strcat(path_variable, bldg, '_appliances_level_variable.csv'), appliances_level_variable);
-        # fid = fopen(strcat(path_variable, bldg, '_appliances_level_variable.txt'), 'wt');
-        # fprintf(fid, '%6.3f\n', appliances_level_variable); fclose(fid);
+        csvwrite(strcat(path_variable, bldg, '_appliances_level_variable.csv'), appliances_level_variable)
+        # fid = fopen(strcat(path_variable, bldg, '_appliances_level_variable.txt'), 'wt')
+        # fprintf(fid, '%6.3f\n', appliances_level_variable);
+        # fclose(fid)
 
-    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     # Write combinatorial files
     # == == == == == == == == == == == == =
@@ -1615,23 +1484,13 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
     # and thermostat are not needed as they are directly defined in the  schedules.
 
     first_file =[(1:prof_number)', area_per_person_variable, ventilation_variable, dhw_variable, light_density_variable];
-    dlmwrite(strcat(path_variable, bldg, '_occ_act_therm_vent_dhw_light_col_levels.txt'), first_file, 'delimiter', '|',
-             'precision', 3);
+    dlmwrite(strcat(path_variable, bldg, '_occ_act_therm_vent_dhw_light_col_levels.txt'), first_file, 'delimiter', '|','precision', 3)
 
     # The second file will perform a similar task but with a column for  each appliance profile and the corresponding installed appliances capacity.
 
     second_file =[(1:prof_number)', appliances_level_variable];
-    dlmwrite(strcat(path_variable, bldg, '_appliances_col_level.txt'), second_file, 'delimiter', '|', 'precision', 3);
+    dlmwrite(strcat(path_variable, bldg, '_appliances_col_level.txt'), second_file, 'delimiter', '|', 'precision', 3)
 
     # The final file that would be needed is the infiltration.However, the previously written infiltration_rate_variable.txt is adequate for the  way that infiltration is modelled.
     return
 
-def rle_cumsum_diff(vals,runlens):
-    clens = np.cumsum(runlens)
-    idx = np.zeros(8760)
-    difference = np.diff(vals)
-    inter = clens[0:len(clens) - 1]
-    for i in range(0, 364):
-        idx[int(inter[i])] = difference[i]
-    out = np.cumsum(idx)
-    return [out]
