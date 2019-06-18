@@ -39,8 +39,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ScheduleGeneration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="627" lean-forward="true" selection-start-line="627" selection-end-line="627" />
+            <state relative-caret-position="729">
+              <caret line="641" selection-start-line="641" selection-end-line="774" />
             </state>
           </provider>
         </entry>
@@ -305,8 +305,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ScheduleGeneration.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
-          <caret line="627" lean-forward="true" selection-start-line="627" selection-end-line="627" />
+        <state relative-caret-position="729">
+          <caret line="641" selection-start-line="641" selection-end-line="774" />
         </state>
       </provider>
     </entry>

@@ -560,65 +560,78 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     # Initialization \
     # -------------- \
-    area_per_person_nominal = 0
-    yearly_occupancy_nominal = 0
-    yearly_activity_nominal = 0
+    Rarea_per_person_nominal = 0
+    Ryearly_occupancy_nominal = 0
+    Ryearly_activity_nominal = 0
 
-    area_per_person_variable = np.zeros((value_number, 1))
-
+    Rarea_per_person_variable = np.zeros(value_number)
+    room[area][sum] = 0
+    for rm in range(0, room_num):
+        room[area][sum] = room[area][sum] + room[area][rm]
     # Calculation
-      # -----------
-    for rm in range(0,room_num):
+    # -----------
+    for rm in range(0, room_num):
         # Nominal values
         # --------------
         if room[area_per_person_nominal][rm] == 0:
-            area_per_person_nominal = area_per_person_nominal
+            Rarea_per_person_nominal = Rarea_per_person_nominal
         else:
-            area_per_person_nominal = area_per_person_nominal + (room[area][rm] * 1 / room[area_per_person_nominal][rm]) / sum(cat(1, room[area][rm]))
-    # Variable values
-    # ---------------
-    if room[area_per_person_nominal][rm] == 0:
-        area_per_person_variable = area_per_person_variable
-    else:
-        area_per_person_variable = area_per_person_variable + (room[area][rm] * 1 / room[area_per_person_variable][rm]) / sum(cat(1, room[area][rm]))
+            Rarea_per_person_nominal = Rarea_per_person_nominal + (
+                        room[area][rm] * 1 / room[area_per_person_nominal][rm]) / room[area][sum]
+        # Variable values
+        # ---------------
+        if room[area_per_person_nominal][rm] == 0:
+            Rarea_per_person_variable = Rarea_per_person_variable
+        else:
+            Rarea_per_person_variable = Rarea_per_person_variable + (
+                        room[area][rm] * 1 / room[area_per_person_variable][rm]) / room[area][sum]
 
-    if area_per_person_nominal != 0:
-        area_per_person_nominal = 1 / area_per_person_nominal
-    if area_per_person_variable != 0:
-        area_per_person_variable = 1. / area_per_person_variable
+    if Rarea_per_person_nominal != 0:
+        Rarea_per_person_nominal = 1 / Rarea_per_person_nominal
+    if Rarea_per_person_variable.sum() != 0:
+        Rarea_per_person_variable = 1 / Rarea_per_person_variable
     else:
-        area_per_person_variable = np.zeros((value_number, 1))
-    for rm  in range(0,room_num):
+        Rarea_per_person_variable = np.zeros(value_number)
+
+    for rm in range(0, room_num):
         # Nominal values
         # --------------
         if room[area_per_person_nominal][rm] == 0:
-            yearly_occupancy_nominal = yearly_occupancy_nominal
-            yearly_activity_nominal = yearly_activity_nominal
+            Ryearly_occupancy_nominal = Ryearly_occupancy_nominal
+            Ryearly_activity_nominal = Ryearly_activity_nominal
         else:
-            yearly_occupancy_nominal = yearly_occupancy_nominal + (room[area][rm] / sum(cat(1, room.area))) * room[yearly_occupancy_nominal][rm] * (1 / room[area_per_person_nominal][rm]) / (1 / area_per_person_nominal)
-            yearly_activity_nominal = yearly_activity_nominal + room[area][rm] * room[activity_nominal][rm].activity_nominal * (1 / room[area_per_person_nominal][rm])
+            Ryearly_occupancy_nominal = Ryearly_occupancy_nominal + (room[area][rm] / room[area][sum]) * \
+                                        room[yearly_occupancy_nominal][rm] * (1 / room[area_per_person_nominal][rm]) / (
+                                                    1 / Rarea_per_person_nominal)
+            Ryearly_activity_nominal = Ryearly_activity_nominal + room[area][rm] * room[activity_nominal][rm] * (
+                        1 / room[area_per_person_nominal][rm])
 
+    if Rarea_per_person_nominal != 0:
+        Ryearly_activity_nominal = Ryearly_activity_nominal / (1 / Rarea_per_person_nominal) / room[area][sum]
+        Ryearly_activity_nominal = np.matlib.repmat(Ryearly_activity_nominal, 8760,
+                                                    1)  # Creation of activity profile end
+    Ryearly_occupancy_variable = np.zeros((8760, prof_number))
+    Ryearly_activity_variable = np.zeros(prof_number)
+    for j in range(0, prof_number):
+        Ryearly_activity_variable[j] = 0
+        for rm in range(0, room_num):
+            # Variable values
+            # ---------------
+            if room[area_per_person_nominal][rm] == 0:
+                Ryearly_occupancy_variable[:, j] = Ryearly_occupancy_variable[:, j]
+                Ryearly_activity_variable[j] = Ryearly_activity_variable[j]
+            else:
+                Ryearly_occupancy_variable[:, j] = Ryearly_occupancy_variable[:, j] + (
+                            room[area][rm] / room[area][sum]) * room[yearly_occupancy_variable][rm][:, j] * (
+                                                               1 / room[area_per_person_variable][rm][j]) / (
+                                                               1 / Rarea_per_person_variable[j])
+                Ryearly_activity_variable[j] = Ryearly_activity_variable[j] + room[area][rm] * \
+                                               room[activity_variable][rm][j] * (
+                                                           1 / room[area_per_person_variable][rm][j])  # check!!!!!
 
-    if area_per_person_nominal != 0:
-    yearly_activity_nominal = yearly_activity_nominal / (1 / area_per_person_nominal) / sum(cat(1, room[area]))
-    yearly_activity_nominal = repmat(yearly_activity_nominal, 8760, 1) # Creation of activity profile end
+    Ryearly_activity_variable = Ryearly_activity_variable / (1 / Rarea_per_person_variable) / room[area][sum]
+    Ryearly_activity_variable = np.tile(Ryearly_activity_variable, (8760, 1))
 
-    for j i in range(0,prof_number):
-        yearly_occupancy_variable[:, j] = np.zeros(8760)
-        yearly_activity_variable[j] = 0
-    for rm in range(0,room_num):
-    # Variable values
-    # ---------------
-    if room[area_per_person_nominal][rm] == 0:
-        yearly_occupancy_variable[:, j] = yearly_occupancy_variable[:, j]
-        yearly_activity_variable[j] = yearly_activity_variable[j]
-        else:
-            yearly_occupancy_variable[:, j] = yearly_occupancy_variable[:, j] + (room[area][rm] / sum(cat(1, room[area]))) * room[yearly_occupancy_variable][rm][:, j] *(1 / room[area_per_person_variable][rm][j]) / (1 / area_per_person_variable[j])
-            yearly_activity_variable[j] = yearly_activity_variable[j] + room[area][rm] * room[activity_variable][rm][j] * (1 / room[area_per_person_variable][rm][j])#check!!!!!
-
-
-    yearly_activity_variable = yearly_activity_variable/ (1/area_per_person_variable) / sum(cat(1, room[area]))
-    yearly_activity_variable = repelem(yearly_activity_variable, 1, 8760)
     # Creation of activity profile
 
     # Thermostats
@@ -626,170 +639,170 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
     for rm in range(0,room_num):
 
-                 # Thermostat values
-    # == == == == == == == == =
+                     # Thermostat values
+        # == == == == == == == == =
 
-    # Heating setpoints(nominal, minimum, maximum) \
-    # --------------------------------------------- \
-    room[therm_h_nominal][rm] = db2024.loc[room[row][rm], 2]
-    room[therm_h_min][rm] = db2024.loc[room[row][rm], 107]
-    room[therm_h_max][rm] = db2024.loc[room[row][rm], 108]
+        # Heating setpoints(nominal, minimum, maximum) \
+        # --------------------------------------------- \
+        room[therm_h_nominal][rm] = db2024.loc[room[row][rm], 2]
+        room[therm_h_min][rm] = db2024.loc[room[row][rm], 107]
+        room[therm_h_max][rm] = db2024.loc[room[row][rm], 108]
 
-    # Cooling setpoints(nominal, minimum, maximum) \
-    # --------------------------------------------- \
-    room[therm_c_nominal][rm] = db2024.loc[room[row][rm], 1]
-    room[therm_c_min][rm] = db2024.loc[room[row][rm], 109]
-    room[therm_c_max][rm] = db2024.loc[room[row][rm], 110]
+        # Cooling setpoints(nominal, minimum, maximum) \
+        # --------------------------------------------- \
+        room[therm_c_nominal][rm] = db2024.loc[room[row][rm], 1]
+        room[therm_c_min][rm] = db2024.loc[room[row][rm], 109]
+        room[therm_c_max][rm] = db2024.loc[room[row][rm], 110]
 
-    # SAMPLE FROM NORMAL DISTRIBUTIONS
-    # == == == == == == == == == == == == == == == ==
-    room[therm_h_variable][rm] = normrnd(room[therm_h_nominal][rm], 1, [prof_number, 1])
-    room[therm_c_variable][rm] = normrnd(room[therm_c_nominal][rm], 1, [prof_number, 1])
+        # SAMPLE FROM NORMAL DISTRIBUTIONS
+        # == == == == == == == == == == == == == == == ==
+        room[therm_h_variable][rm] = normrnd(room[therm_h_nominal][rm], 1, [prof_number, 1])
+        room[therm_c_variable][rm] = normrnd(room[therm_c_nominal][rm], 1, [prof_number, 1])
 
-    # Prevent heating setpoint being higher than cooling setpoint \
-    # ----------------------------------------------------------- \
-        non_compliant_points = find(room[therm_h_variable][rm] > room[therm_c_variable][rm])
-    if not non_compliant_points:
-    for nc in range(0,max(len(non_compliant_points))
-    while room[therm_h_variable][rm][non_compliant_points[nc]] > room[therm_c_variable][rm][non_compliant_points[nc]]
-        room[therm_h_variable][rm][non_compliant_points[nc]] = normrnd(room[therm_h_nominal][rm], 1, [1, 1])
-        room[therm_c_variable][rm](non_compliant_points[nc]) = normrnd(room[therm_c_nominal][rm], 1, [1, 1])
+        # Prevent heating setpoint being higher than cooling setpoint \
+        # ----------------------------------------------------------- \
+            non_compliant_points = find(room[therm_h_variable][rm] > room[therm_c_variable][rm])
+        if not non_compliant_points:
+        for nc in range(0,max(len(non_compliant_points))
+        while room[therm_h_variable][rm][non_compliant_points[nc]] > room[therm_c_variable][rm][non_compliant_points[nc]]
+            room[therm_h_variable][rm][non_compliant_points[nc]] = normrnd(room[therm_h_nominal][rm], 1, [1, 1])
+            room[therm_c_variable][rm](non_compliant_points[nc]) = normrnd(room[therm_c_nominal][rm], 1, [1, 1])
 
-    # SAMPLE FROM TRIANGULAR DISTRIBUTIONS
-    # == == == == == == == == == == == == == == == == == ==
-    # Create triangular distribution
-    # ------------------------------
-    x0 = [room[therm_h_min][rm] - 1, room[therm_h_max][rm] + 1]
-    [x, ~] = fsolve( @ (x)my_triang(x, room[therm_h_min][rm], room[therm_h_max][rm], room[therm_h_nominal][rm]), x0) # Callsolver
-    # Sample from triangular distribution
-    # -----------------------------------
-     pd = makedist('Triangular', 'a', x(1), 'b', room[rm].therm_h_nominal, 'c', x(2))
-    # room[rm].therm_h_variable = random(pdd, value_number, 1)
-    #
-    # Create triangular distribution
-    # ------------------------------
-    # x0 = [room[rm].therm_c_min - 1, room[rm].therm_c_max + 1];
-    # [x, ~] = fsolve( @ (x)
-    my_triang(x, room[therm_c_min][rm], room[therm_c_max][rm], room[therm_c_nominal][rm]), x0)# Call solver
-    #
-    # Sample from triangular distribution
-    # -----------------------------------
-    # pd1 = makedist('Triangular', 'a', x(1), 'b', room[rm].therm_c_nominal, 'c', x(2));
-    # room[rm].therm_c_variable = random(pd1, value_number, 1);
+        # SAMPLE FROM TRIANGULAR DISTRIBUTIONS
+        # == == == == == == == == == == == == == == == == == ==
+        # Create triangular distribution
+        # ------------------------------
+        x0 = [room[therm_h_min][rm] - 1, room[therm_h_max][rm] + 1]
+        [x, ~] = fsolve( @ (x)my_triang(x, room[therm_h_min][rm], room[therm_h_max][rm], room[therm_h_nominal][rm]), x0) # Callsolver
+        # Sample from triangular distribution
+        # -----------------------------------
+         pd = makedist('Triangular', 'a', x(1), 'b', room[rm].therm_h_nominal, 'c', x(2))
+        # room[rm].therm_h_variable = random(pdd, value_number, 1)
+        #
+        # Create triangular distribution
+        # ------------------------------
+        # x0 = [room[rm].therm_c_min - 1, room[rm].therm_c_max + 1];
+        # [x, ~] = fsolve( @ (x)
+        my_triang(x, room[therm_c_min][rm], room[therm_c_max][rm], room[therm_c_nominal][rm]), x0)# Call solver
+        #
+        # Sample from triangular distribution
+        # -----------------------------------
+        # pd1 = makedist('Triangular', 'a', x(1), 'b', room[rm].therm_c_nominal, 'c', x(2));
+        # room[rm].therm_c_variable = random(pd1, value_number, 1);
 
-    # Prevent heating setpoint being higher than cooling setpoint
-    # -----------------------------------------------------------
-    # non_compliant_points = find(room[rm].therm_h_variable > room[rm].therm_c_variable);
-    # if isempty(non_compliant_points) == 0
-        # for nc = 1:1:max(size(non_compliant_points))
-    # while room[rm].therm_h_variable(non_compliant_points(nc)) > room[rm].therm_c_variable(non_compliant_points(nc))
-        # room[rm].therm_h_variable(non_compliant_points(nc)) = random(pdd, 1);
-    # room[rm].therm_c_variable(non_compliant_points(nc)) = random(pd1d, 1);
+        # Prevent heating setpoint being higher than cooling setpoint
+        # -----------------------------------------------------------
+        # non_compliant_points = find(room[rm].therm_h_variable > room[rm].therm_c_variable);
+        # if isempty(non_compliant_points) == 0
+            # for nc = 1:1:max(size(non_compliant_points))
+        # while room[rm].therm_h_variable(non_compliant_points(nc)) > room[rm].therm_c_variable(non_compliant_points(nc))
+            # room[rm].therm_h_variable(non_compliant_points(nc)) = random(pdd, 1);
+        # room[rm].therm_c_variable(non_compliant_points(nc)) = random(pd1d, 1);
 
-    room[therm_h_variable][rm] = round(room[therm_h_variable][rm], 1)# round to 1 decimal digit
-    room[therm_c_variable][rm] = round(room[therm_c_variable][rm], 1) # round to 1 decimal digit
+        room[therm_h_variable][rm] = round(room[therm_h_variable][rm], 1)# round to 1 decimal digit
+        room[therm_c_variable][rm] = round(room[therm_c_variable][rm], 1) # round to 1 decimal digit
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # Create thermostat profiles
-    # == == == == == == == == == == == == ==
-    room[yearly_thermostat_heating_nominal][rm] = repmat(room[therm_h_nominal][rm], 8760, 1)
-    room[rm].yearly_thermostat_cooling_nominal = repmat(room[rm].therm_c_nominal, 8760, 1)
+        # Create thermostat profiles
+        # == == == == == == == == == == == == ==
+        room[yearly_thermostat_heating_nominal][rm] = repmat(room[therm_h_nominal][rm], 8760, 1)
+        room[rm].yearly_thermostat_cooling_nominal = repmat(room[rm].therm_c_nominal, 8760, 1)
 
-    room[rm].yearly_thermostat_heating_variable = repmat(room[rm].therm_h_variable', 8760, 1)
-    room[rm].yearly_thermostat_cooling_variable = repmat(room[rm].therm_c_variable', 8760, 1)
+        room[rm].yearly_thermostat_heating_variable = repmat(room[rm].therm_h_variable', 8760, 1)
+        room[rm].yearly_thermostat_cooling_variable = repmat(room[rm].therm_c_variable', 8760, 1)
 
-    # Unoccupied setback
-    if room[rm].setback == 1
-    room[rm].yearly_thermostat_heating_nominal(room[rm].yearly_occupancy_nominal == 0) = room[rm].yearly_thermostat_heating_nominal(room[rm].yearly_occupancy_nominal == 0) - room[rm].set_back_temp
-    room[rm].yearly_thermostat_cooling_nominal(room[rm].yearly_occupancy_nominal == 0) = room[rm].yearly_thermostat_cooling_nominal(room[rm].yearly_occupancy_nominal == 0) + room[rm].set_back_temp
+        # Unoccupied setback
+        if room[rm].setback == 1
+            room[yearly_thermostat_heating_nominal][rm](room[yearly_occupancy_nominal][rm] == 0) = room[yearly_thermostat_heating_nominal][rm](room[yearly_occupancy_nominal][rm] == 0) - room[set_back_temp][rm]
+            room[yearly_thermostat_cooling_nominal][rm](room[yearly_occupancy_nominal][rm] == 0) = room[yearly_thermostat_cooling_nominal][rm](room[yearly_occupancy_nominal][rm] == 0) + room[set_back_temp][rm]
 
-    room[rm].yearly_thermostat_heating_variable(room[rm].yearly_occupancy_variable == 0) = room[rm].yearly_thermostat_heating_variable(room[rm].yearly_occupancy_variable == 0) - room[rm].set_back_temp
-    room[rm].yearly_thermostat_cooling_variable(room[rm].yearly_occupancy_variable == 0) = room[rm].yearly_thermostat_cooling_variable(room[rm].yearly_occupancy_variable == 0) + room[rm].set_back_temp
+            room[yearly_thermostat_heating_variable][rm](room[yearly_occupancy_variable][rm] == 0) = room[yearly_thermostat_heating_variable][rm](room[yearly_occupancy_variable][rm] == 0) - room[set_back_temp][rm]
+            room[yearly_thermostat_cooling_variable][rm](room[yearly_occupancy_variable][rm] == 0) = room[yearly_thermostat_cooling_variable][rm](room[yearly_occupancy_variable][rm] == 0) + room[set_back_temp][rm]
 
-    # Night setback for nominal profile
-    if room[night][rm] == 1:
+        # Night setback for nominal profile
+        if room[night][rm] == 1:
+            for i in range(0:365):
+                if i == 1:
+                   # Heating
+                    room[yearly_thermostat_heating_nominal][rm](i:(wake - 1)) = room[yearly_thermostat_heating_nominal][rm](i:(wake - 1)) - room[set_back_temp][rm]
+                    room[yearly_thermostat_heating_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[yearly_thermostat_heating_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room[set_back_temp][rm]
+                # Cooling
+                    room[yearly_thermostat_cooling_nominal][rm](i:(wake - 1)) = room[yearly_thermostat_cooling_nominal][rm](i:(wake - 1)) + room[set_back_temp][rm]
+                    room[yearly_thermostat_cooling_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room[set_back_temp][rm]
+                elif i == 365:
+                # Heating
+                    room[yearly_thermostat_heating_nominal][rm]((24 * i - (24 - sleep)):end) = room[yearly_thermostat_heating_nominal][rm]((24 * i - (24 - sleep)):end) - room[set_back_temp][rm]
+                # Cooling
+                    room[yearly_thermostat_cooling_nominal][rm]((24 * i - (24 - sleep)):end) = room[yearly_thermostat_cooling_nominal][rm]((24 * i - (24 - sleep)):end) + room[set_back_temp][rm]
+                else:
+                # Heating
+                    room[yearly_thermostat_heating_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[yearly_thermostat_heating_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room[set_back_temp][rm]
+                # Cooling
+                    room[yearly_thermostat_cooling_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[yearly_thermostat_cooling_nominal][rm]((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room[set_back_temp][rm]
+        end
+        end
+        end
+
+        # Night setback for variable profile
+        if room[night]rm] == 1:
+        for j in range(0,prof_number):
         for i in range(0:365):
-            if i == 1:
-               # Heating
-                room[rm].yearly_thermostat_heating_nominal(i:(wake - 1)) = room[rm].yearly_thermostat_heating_nominal(i:(wake - 1)) - room[rm].set_back_temp;
-                room[rm].yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[rm].yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room[rm].set_back_temp;
-            # Cooling
-                room[rm].yearly_thermostat_cooling_nominal(i:(wake - 1)) = room[rm].yearly_thermostat_cooling_nominal(i:(wake - 1)) + room[rm].set_back_temp;
-                room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room[rm].set_back_temp;
-            elif i == 365:
-            # Heating
-                room[rm].yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):end) = room[rm].yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):end) - room[rm].set_back_temp;
-            # Cooling
-                room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):end) = room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):end) + room[rm].set_back_temp;
-            else:
-            # Heating
-                room[rm].yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[rm].yearly_thermostat_heating_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) - room[rm].set_back_temp;
-            # Cooling
-                room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) = room[rm].yearly_thermostat_cooling_nominal((24 * i - (24 - sleep)):(24 * i + (wake - 1))) + room[rm].set_back_temp;
-    end
-    end
-    end
+        if i == 1:
+           # Heating
+        room[yearly_thermostat_heating_variable][rm](i:(wake_var(i, j) - 1), j) = room[rm][yearly_thermostat_heating_variable](i:(wake_var(i, j) - 1), j) - room[set_back_temp][rm]
+        room[yearly_thermostat_heating_variable][rm].((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_heating_variable][rm](24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room[set_back_temp][rm]
+        # Cooling
+        room[yearly_thermostat_cooling_variable][rm](i:(wake_var(i, j) - 1), j) = room[rm].yearly_thermostat_cooling_variable(i:(wake_var(i, j) - 1), j) + room[rm].set_back_temp;
+        room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room[set_back_temp][rm]
+        elseif
+        i == 365
+        # Heating
+        room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) = room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) - room[rm].set_back_temp
+        # Cooling
+        room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) = room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) + room[rm].set_back_temp
+        else
+        # Heating
+        room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room[set_back_temp][rm]
+        # Cooling][rm]
+        room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room[set_back_temp][rm]
+        end
+        end
+        end
+        end
 
-    # Night setback for variable profile
-    if room[night]rm] == 1:
-    for j in range(0,prof_number):
-    for i in range(0:365):
-    if i == 1:
-       # Heating
-    room[yearly_thermostat_heating_variable][rm](i:(wake_var(i, j) - 1), j) = room[rm][yearly_thermostat_heating_variable](i:(wake_var(i, j) - 1), j) - room[set_back_temp][rm]
-    room[yearly_thermostat_heating_variable][rm].((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_heating_variable][rm](24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room[set_back_temp][rm]
-    # Cooling
-    room[yearly_thermostat_cooling_variable][rm](i:(wake_var(i, j) - 1), j) = room[rm].yearly_thermostat_cooling_variable(i:(wake_var(i, j) - 1), j) + room[rm].set_back_temp;
-    room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room[set_back_temp][rm]
-    elseif
-    i == 365
-    # Heating
-    room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) = room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) - room[rm].set_back_temp;
-    # Cooling
-    room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) = room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):end, j) + room[rm].set_back_temp;
-    else
-    # Heating
-    room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_heating_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) - room[set_back_temp][rm]
-    # Cooling][rm]
-    room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) = room[yearly_thermostat_cooling_variable][rm]((24 * i - (24 - sleep_var(i, j))):(24 * i + (wake_var(i, j) - 1)), j) + room[set_back_temp][rm]
-    end
-    end
-    end
-    end
-
-    end
+        end
 
     # Synthesizing among room types
     # == == == == == == == == == == == == == == =
 
     # Initialization \
     # -------------- \
-    therm_h_nominal = 0
-    therm_c_nominal = 0
-    yearly_thermostat_heating_nominal = 0
-    yearly_thermostat_cooling_nominal = 0
+    Rtherm_h_nominal = 0
+    Rtherm_c_nominal = 0
+    Ryearly_thermostat_heating_nominal = 0
+    Ryearly_thermostat_cooling_nominal = 0
 
-    therm_h_variable = 0
-    therm_c_variable = 0
-    yearly_thermostat_heating_variable = 0
-    yearly_thermostat_cooling_variable = 0
+    Rtherm_h_variable = 0
+    Rtherm_c_variable = 0
+    Ryearly_thermostat_heating_variable = 0
+    Ryearly_thermostat_cooling_variable = 0
 
     # Calculation
     # -----------
     for rm in range(0,room_num):
         # Nominal values \
         # -------------- \
-        therm_h_nominal = therm_h_nominal + (room[area][rm] * room[therm_h_nominal][rm]) / sum(cat(1, room[area]))
-        therm_c_nominal = therm_c_nominal + (room[rm].area * room[rm].therm_c_nominal) / sum(cat(1, room[area]))
-        yearly_thermostat_heating_nominal = yearly_thermostat_heating_nominal + (room[area][rm] * room[yearly_thermostat_heating_nominal][rm]) / sum(cat(1, room[area]))
-        yearly_thermostat_cooling_nominal = yearly_thermostat_cooling_nominal + (room[area][rm] * room[yearly_thermostat_cooling_nominal][rm]) / sum(cat(1, room[area]))
+        Rtherm_h_nominal = therm_h_nominal + (room[area][rm] * room[therm_h_nominal][rm]) / sum(cat(1, room[area]))
+        Rtherm_c_nominal = therm_c_nominal + (room[area][rm] * room[therm_c_nominal][rm]) / sum(cat(1, room[area]))
+        Ryearly_thermostat_heating_nominal = yearly_thermostat_heating_nominal + (room[area][rm] * room[yearly_thermostat_heating_nominal][rm]) / sum(cat(1, room[area]))
+        Ryearly_thermostat_cooling_nominal = yearly_thermostat_cooling_nominal + (room[area][rm] * room[yearly_thermostat_cooling_nominal][rm]) / sum(cat(1, room[area]))
         # Variable values \
     # --------------- \
-        therm_h_variable = therm_h_variable + (room[area][rm] * room[therm_h_variable][rm]) / sum(cat(1, room[area]))
-        therm_c_variable = therm_c_variable + (room[area][rm] * room[therm_c_variable][rm]) / sum(cat(1, room[area]))
-        yearly_thermostat_heating_variable = yearly_thermostat_heating_variable + (room[rm].area * room[yearly_thermostat_heating_variable][rm]) / sum(cat(1, room[area]))
-        yearly_thermostat_cooling_variable = yearly_thermostat_cooling_variable + (room[rm].area * room[yearly_thermostat_cooling_variable][rm]) / sum(cat(1, room[area]))
+        Rtherm_h_variable = therm_h_variable + (room[area][rm] * room[therm_h_variable][rm]) / sum(cat(1, room[area]))
+        Rtherm_c_variable = therm_c_variable + (room[area][rm] * room[therm_c_variable][rm]) / sum(cat(1, room[area]))
+        Ryearly_thermostat_heating_variable = yearly_thermostat_heating_variable + (room[area][rm] * room[yearly_thermostat_heating_variable][rm]) / sum(cat(1, room[area]))
+        Ryearly_thermostat_cooling_variable = yearly_thermostat_cooling_variable + (room[area][rm] * room[yearly_thermostat_cooling_variable][rm]) / sum(cat(1, room[area]))
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -800,8 +813,8 @@ def CESAR_function_Variability_case_multiroom_selection(prof_nr, value_nr, varia
 
                  # Create ventilation profile \
     # -------------------------- \
-        room[rm].yearly_ventilation_nominal = room[rm].yearly_occupancy_nominal
-        room[rm].yearly_ventilation_variable = room[rm].yearly_occupancy_variable
+        room[yearly_ventilation_nominal][rm] = room[yearly_occupancy_nominal][rm]
+        room[yearly_ventilation_variable][rm] = room[yearly_occupancy_variable][rm]
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
