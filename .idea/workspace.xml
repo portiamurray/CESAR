@@ -19,7 +19,7 @@
         <entry file="file://$PROJECT_DIR$/RetrofitType.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="390">
-              <caret line="26" column="41" lean-forward="true" selection-start-line="26" selection-start-column="41" selection-end-line="26" selection-end-column="41" />
+              <caret line="26" column="41" selection-start-line="26" selection-start-column="41" selection-end-line="26" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -27,7 +27,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/DemandModelling.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
+            <state relative-caret-position="-2013">
               <caret line="14" selection-start-line="14" selection-end-line="14" selection-end-column="80" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
@@ -39,8 +39,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ScheduleGeneration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="500">
-              <caret line="521" column="146" selection-start-line="521" selection-start-column="146" selection-end-line="521" selection-end-column="146" />
+            <state relative-caret-position="462">
+              <caret line="627" lean-forward="true" selection-start-line="627" selection-end-line="627" />
             </state>
           </provider>
         </entry>
@@ -67,9 +67,14 @@
       <find>project_direc</find>
       <find>0.15</find>
       <find>np.</find>
-      <find>variable_schedules</find>
       <find>%</find>
       <find>pd</find>
+      <find>variable_schedules</find>
+      <find>(rm)</find>
+      <find>yearly_dhw_nominal</find>
+      <find>;</find>
+      <find>yearly_variation_variable</find>
+      <find>wake_var</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -123,7 +128,7 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -284,13 +289,13 @@
     <entry file="file://$PROJECT_DIR$/RetrofitType.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="390">
-          <caret line="26" column="41" lean-forward="true" selection-start-line="26" selection-start-column="41" selection-end-line="26" selection-end-column="41" />
+          <caret line="26" column="41" selection-start-line="26" selection-start-column="41" selection-end-line="26" selection-end-column="41" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/DemandModelling.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
+        <state relative-caret-position="-2013">
           <caret line="14" selection-start-line="14" selection-end-line="14" selection-end-column="80" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
@@ -300,8 +305,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ScheduleGeneration.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="500">
-          <caret line="521" column="146" selection-start-line="521" selection-start-column="146" selection-end-line="521" selection-end-column="146" />
+        <state relative-caret-position="462">
+          <caret line="627" lean-forward="true" selection-start-line="627" selection-end-line="627" />
         </state>
       </provider>
     </entry>
