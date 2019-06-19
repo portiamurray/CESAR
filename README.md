@@ -1,4 +1,3 @@
-#CESAR
 The CESAR (CombinedEnergySimulationAndRetrofitting) – Tool consists of two main parts, the
 Demand Modelling (DM) and the Retrofit Modelling (RM). The DM processes the
 building related information (Geometry, Building Usage and Building Envelope Constructions) into
