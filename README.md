@@ -1,6 +1,6 @@
-# CESAR
+# Stock modeling
 
-The CESAR (CombinedEnergySimulationAndRetrofitting) – Tool consists of two main parts, the
+This is a Combined Energy Simulation and Retrofitting tool which consists of two main parts, the
 Demand Modelling (DM) and the Retrofit Modelling (RM). The DM processes the building related information (Geometry, Building Usage and Building Envelope Constructions) into EnergyPlus input-files which are then simulated with the specified weather file. The complete process is fully automated and requires the Building footprints and certain information about the
 building like Energy Systems, Building Age, building geometry, commune/gemeinde number in Switzerland (for weather file assignment) etc., as inputs. Based on this information, and EnergyPlus IDF file is created in order to simulate the loads of the building (Electricity, heating demand, and cooling demand).
 
